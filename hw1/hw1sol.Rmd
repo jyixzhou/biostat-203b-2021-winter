@@ -1,6 +1,6 @@
 ---
 title: "Biostat 203B Homework 1"
-author: Hua Zhou
+author: Juliet Yixuan Zhou
 subtitle: Due Jan 22 @ 11:59PM
 output: html_document
 ---
@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Display machine information for reproducibility:
-```{r, eval=F}
+```{r, eval=T}
 sessionInfo()
 ```
 
@@ -19,6 +19,8 @@ sessionInfo()
 **No handwritten homework reports are accepted for this course.** We work with Git and GitHub. Efficient and abundant use of Git, e.g., frequent and well-documented commits, is an important criterion for grading your homework.
 
 1. Apply for the [Student Developer Pack](https://education.github.com/pack) at GitHub using your UCLA email.
+
+**Solution**: Done.
 
 2. Create a **private** repository `biostat-203b-2021-winter` and add `Hua-Zhou`, `Chris-German` and `ElvisCuiHan` as your collaborators with write permission.
 
