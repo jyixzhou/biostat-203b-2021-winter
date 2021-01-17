@@ -174,19 +174,31 @@ tail -n+2 | sort | uniq -c
 ## Q3. Who's popular in Price and Prejudice
 
 1. You and your friend just have finished reading *Pride and Prejudice* by Jane Austen. Among the four main characters in the book, Elizabeth, Jane, Lydia, and Darcy, your friend thinks that Darcy was the most mentioned. You, however, are certain it was Elizabeth. Obtain the full text of the novel from <http://www.gutenberg.org/cache/epub/42671/pg42671.txt> and save to your local folder. 
-    ```{bash, eval=FALSE}
+    ```{bash, eval=T}
     curl http://www.gutenberg.org/cache/epub/42671/pg42671.txt > pride_and_prejudice.txt
     ```
 Do **not** put this text file `pride_and_prejudice.txt` in Git. Using a `for` loop, how would you tabulate the number of times each of the four characters is mentioned?
 
+**Solution**:
+
+Elizabeth is mentioned 634 times, Jane 294 times, Lydia 170 times, and Darcy 417 times.    
+```{bash}
+for name in Elizabeth Jane Lydia Darcy
+  do
+    grep -o $name pride_and_prejudice.txt | wc -l
+  done
+```
 2. What's the difference between the following two commands?
-    ```{bash eval=FALSE}
+    ```{bash eval=F}
     echo 'hello, world' > test1.txt
     ```
     and
-    ```{bash eval=FALSE}
+    ```{bash eval=F}
     echo 'hello, world' >> test2.txt
     ```
+
+**Solution**:
+`>` directs the output of echo to the test1.txt file, while `>>` appends the output to the test2.txt file. 
 
 3. Using your favorite text editor (e.g., `vi`), type the following and save the file as `middle.sh`:
     ```{bash eval=FALSE}
@@ -199,7 +211,13 @@ Using `chmod` make the file executable by the owner, and run
     ```{bash eval=FALSE}
     ./middle.sh pride_and_prejudice.txt 20 5
     ```
+
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
+
+**Solution**:
+
+The middle.sh outputs the last few lines before a specified line number from the input file. Here, `"$1"` specifies the input file, e.g. `pride_and_prejudice.txt`. `"$2"` indicates the line number to end at, e.g. the 20th line, and `"$3"` indicates the number of last few lines to output, e.g. the last 5 lines. In the example, we want the last 5 lines ending at the 20th line of the pride_and_prejudice.txt file.
+
 
 ### Q4. More fun with Linux
 
