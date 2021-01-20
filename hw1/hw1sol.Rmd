@@ -227,7 +227,69 @@ Try these commands in Bash and interpret the results: `cal`, `cal 2021`, `cal 9 
 ```{bash}
 cal
 ```
-`cal 2021` displays ??:
+`cal 2021` displays the calender of year 2021:
 ```{bash}
 cal 2021
 ```
+`cal 9 1752` displays the calendar for September of 1972. However, it is missing days 3 to 13. It appears that these 11 days were skipped for leap year adjustments. 
+```{bash}
+cal 9 1752
+```
+`date` displays the current time and date.
+```{bash}
+date
+```
+`hostname` shows the system's host name. 
+```{bash}
+hostname
+```
+
+`arch` displays the machine hardware name. 
+```{bash}
+arch
+```
+`uname -a` prints system information. `-a` specifies printing all of the following information: kernel name, network and hostname, kernel release, kernel version, machine hardware name, processor type, hardware platform, and operating system. 
+```{bash}
+uname -a
+```
+`uptime` displays how long the system has been running. 
+```{bash}
+uptime
+```
+`who am i` displays the username. 
+```{bash}
+whoami
+```
+`who` displays the users who are logged on the server. 
+```{bash}
+who
+```
+`w` displays who is logged on and what they are doing on the server. 
+```{bash}
+w
+```
+`id` displays the user and group information for the current user. 
+```{bash}
+id
+```
+
+`last | head` displays the first ten lines of a list of last logged in users. 
+```{bash}
+last | head
+```
+`echo {con,pre}{sent,fer}{s,ed}` displays all 8 combinations from choosing one element from each of the three lists. 
+```{bash}
+echo {con,pre}{sent,fer}{s,ed}
+```
+`time` is used to time the execution of a script, and `sleep` is used to delay for a specified amount of time. Overall, `time sleep 5` asks to wait for 5 seconds before execution. 
+```{bash}
+time sleep 5
+man time sleep
+```
+`history | tail`
+```{bash}
+echo "abc"
+set -o history
+history | tail
+```
+
