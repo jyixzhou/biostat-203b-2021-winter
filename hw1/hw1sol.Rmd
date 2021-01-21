@@ -36,13 +36,12 @@ sessionInfo()
 
 5. After this course, you can make this repository public and use it to demonstrate your skill sets on job market.
 
-**Solution**: Done.
 
 ## Q2. Linux Shell Commands
 
 1. This exercise (and later in this course) uses the [MIMIC-IV data](https://mimic-iv.mit.edu), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <https://mimic-iv.mit.edu/docs/access/> to (1) complete the CITI `Data or Specimens Only Research` course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)
 
-**Solution**: Here is my [course completion report](citiprogram.org/verify/?ke004058f-7856-4ab9-bd6f-bedda1045e28-40365014) and my [course completion certificate](citiprogram.org/verify/?w367a1a4c-2e17-4855-a27c-b5cca9c074fc-40365014). The credential application has been submitted, pending approval. 
+**Solution**: Here is my [course completion report](citiprogram.org/verify/?ke004058f-7856-4ab9-bd6f-bedda1045e28-40365014) and my [course completion certificate](citiprogram.org/verify/?w367a1a4c-2e17-4855-a27c-b5cca9c074fc-40365014). The PhysioNet credential application has also been approved.
 
 2. The `/usr/203b-data/mimic-iv/` folder on teaching server contains data sets from MIMIC-IV. Refer to <https://mimic-iv.mit.edu/docs/datasets/> for details of data files.  
     ```{bash}
@@ -70,16 +69,13 @@ ls -l /usr/203b-data/mimic-iv/hosp
 ls -l /usr/203b-data/mimic-iv/icu
 ```
 
-zcat
-"uncompresses either a list of files on the command line or its standard input and writes the uncompressed data on standard output"
+The following information is obtained using the `man` command. 
+zcat uncompresses a list of files writes the uncompressed data on standard output. 
 
-zless
-"a filter which allows examination of compressed or plain text files one screenful at a time on a soft-copy terminal"
+zless and zmore are used to examine compressed or plain text files one screenful at a time on a soft-copy terminal. 
 
-zmore
-"a filter which allows examination of compressed or plain text files one screenful at a time on a soft-copy terminal.  zmore works on files compressed with compress, pack or gzip, and also on uncompressed files."
+zgrep searches possibly compressed files for a regular expression. 
 
-zgrep - search possibly compressed files for a regular expression
 ```{bash, eval=F}
 man zcat
 man zless
@@ -91,6 +87,7 @@ man zgrep
 
 **Solution**:
 
+The following code displays detailed information of files that end in `.gz` in the core folder. 
 ```{bash, eval=T}
 for datafile in /usr/203b-data/mimic-iv/core/*.gz
   do
@@ -120,52 +117,52 @@ Display the number of lines in this data file, which is 524521.
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | wc -l
 ```
 
-Display the number of unique patients in this data file:
-  print sorted `subject_id` from data file, then use uniq to find the number of unique occurrences  
-Note: the number here 257367 includes the header line as a unique entry too 
+Display the number of unique patients in this data file: print sorted `subject_id` from data file, then use uniq to find the number of unique occurrences.  
+
+Note: the number generated from the following code, 257367, includes the header line as a unique entry too. 
 
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $1 }' | 
 sort | uniq | wc -l
 ```
     
-The code below fixes the header issue. 
+The code below fixes the header issue. Therefore, there should be 257366 unique patients in the admissions data file.  
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $1 }' | 
 tail -n+2 | sort | uniq | wc -l
 ```
 
-Display all possible values in the variable `admission_type`:
+Display all possible values in the variable `admission_type` and their counts:
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $6 }' | 
 tail -n+2 | sort | uniq -c
 ```
 
-Display all possible values in the variable `admission_location`:
+Display all possible values in the variable `admission_location` and their counts:
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $7 }' | 
 tail -n+2 | sort | uniq -c
 ```
 
-Display all possible values in the variable `insurance`:
+Display all possible values in the variable `insurance` and their counts:
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $9 }' | 
 tail -n+2 | sort | uniq -c
 ```
 
-Display all possible values in the variable `language`:
+Display all possible values in the variable `language` and their counts:
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $10 }' | 
 tail -n+2 | sort | uniq -c
 ```
 
-Display all possible values in the variable `marital_status`:
+Display all possible values in the variable `marital_status` and their counts:
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $11 }' | 
 tail -n+2 | sort | uniq -c
 ```
 
-Display all possible values in the variable `ethnicity`:
+Display all possible values in the variable `ethnicity` and their counts:
 ```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, '{ print $12 }' | 
 tail -n+2 | sort | uniq -c
@@ -223,7 +220,7 @@ The middle.sh outputs the last few lines before a specified line number from the
 
 Try these commands in Bash and interpret the results: `cal`, `cal 2021`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
 
-**Solution**: `cal` displays the calendar of current month:
+**Solution**: `cal` displays the calendar of the current month:
 ```{bash}
 cal
 ```
@@ -231,7 +228,7 @@ cal
 ```{bash}
 cal 2021
 ```
-`cal 9 1752` displays the calendar for September of 1972. However, it is missing days 3 to 13. It appears that these 11 days were skipped for leap year adjustments. 
+`cal 9 1752` displays the calendar for September of 1972. It is missing days 3 to 13, because these 11 days were skipped for leap year adjustments. 
 ```{bash}
 cal 9 1752
 ```
@@ -284,7 +281,6 @@ echo {con,pre}{sent,fer}{s,ed}
 `time` is used to time the execution of a script, and `sleep` is used to delay for a specified amount of time. Overall, `time sleep 5` asks to wait for 5 seconds before execution. 
 ```{bash}
 time sleep 5
-man time sleep
 ```
 `history | tail`
 ```{bash}
