@@ -426,14 +426,13 @@ summary {
 <ol start="5" style="list-style-type: decimal">
 <li>After this course, you can make this repository public and use it to demonstrate your skill sets on job market.</li>
 </ol>
-<p><strong>Solution</strong>: Done.</p>
 </div>
 <div id="q2.-linux-shell-commands" class="section level2">
 <h2>Q2. Linux Shell Commands</h2>
 <ol style="list-style-type: decimal">
 <li>This exercise (and later in this course) uses the <a href="https://mimic-iv.mit.edu">MIMIC-IV data</a>, a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <a href="https://mimic-iv.mit.edu/docs/access/" class="uri">https://mimic-iv.mit.edu/docs/access/</a> to (1) complete the CITI <code>Data or Specimens Only Research</code> course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)</li>
 </ol>
-<p><strong>Solution</strong>: Here is my <a href="citiprogram.org/verify/?ke004058f-7856-4ab9-bd6f-bedda1045e28-40365014">course completion report</a> and my <a href="citiprogram.org/verify/?w367a1a4c-2e17-4855-a27c-b5cca9c074fc-40365014">course completion certificate</a>. The credential application has been submitted, pending approval.</p>
+<p><strong>Solution</strong>: Here is my <a href="citiprogram.org/verify/?ke004058f-7856-4ab9-bd6f-bedda1045e28-40365014">course completion report</a> and my <a href="citiprogram.org/verify/?w367a1a4c-2e17-4855-a27c-b5cca9c074fc-40365014">course completion certificate</a>. The PhysioNet credential application has also been approved.</p>
 <ol start="2" style="list-style-type: decimal">
 <li><p>The <code>/usr/203b-data/mimic-iv/</code> folder on teaching server contains data sets from MIMIC-IV. Refer to <a href="https://mimic-iv.mit.edu/docs/datasets/" class="uri">https://mimic-iv.mit.edu/docs/datasets/</a> for details of data files.</p>
 <pre class="bash"><code>ls -l /usr/203b-data/mimic-iv</code></pre>
@@ -484,10 +483,9 @@ summary {
 ## -rw-r--r--. 1 huazhou huazhou  328835832 Jan 11 02:14 inputevents.csv.gz
 ## -rw-r--r--. 1 huazhou huazhou   35300863 Jan 11 02:25 outputevents.csv.gz
 ## -rw-r--r--. 1 huazhou huazhou   19362097 Jan 11 02:14 procedureevents.csv.gz</code></pre>
-<p>zcat “uncompresses either a list of files on the command line or its standard input and writes the uncompressed data on standard output”</p>
-<p>zless “a filter which allows examination of compressed or plain text files one screenful at a time on a soft-copy terminal”</p>
-<p>zmore “a filter which allows examination of compressed or plain text files one screenful at a time on a soft-copy terminal. zmore works on files compressed with compress, pack or gzip, and also on uncompressed files.”</p>
-<p>zgrep - search possibly compressed files for a regular expression</p>
+<p>The following information is obtained using the <code>man</code> command. zcat uncompresses a list of files writes the uncompressed data on standard output.</p>
+<p>zless and zmore are used to examine compressed or plain text files one screenful at a time on a soft-copy terminal.</p>
+<p>zgrep searches possibly compressed files for a regular expression.</p>
 <pre class="bash"><code>man zcat
 man zless
 man zmore
@@ -496,6 +494,7 @@ man zgrep</code></pre>
 <li>What’s the output of following bash script?</li>
 </ol>
 <p><strong>Solution</strong>:</p>
+<p>The following code displays detailed information of files that end in <code>.gz</code> in the core folder.</p>
 <pre class="bash"><code>for datafile in /usr/203b-data/mimic-iv/core/*.gz
   do
     ls -l $datafile
@@ -524,16 +523,16 @@ man zgrep</code></pre>
 <p>Display the number of lines in this data file, which is 524521.</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | wc -l</code></pre>
 <pre><code>## 524521</code></pre>
-<p>Display the number of unique patients in this data file: print sorted <code>subject_id</code> from data file, then use uniq to find the number of unique occurrences<br />
-Note: the number here 257367 includes the header line as a unique entry too</p>
+<p>Display the number of unique patients in this data file: print sorted <code>subject_id</code> from data file, then use uniq to find the number of unique occurrences.</p>
+<p>Note: the number generated from the following code, 257367, includes the header line as a unique entry too.</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $1 }&#39; | 
 sort | uniq | wc -l</code></pre>
 <pre><code>## 257367</code></pre>
-<p>The code below fixes the header issue.</p>
+<p>The code below fixes the header issue. Therefore, there should be 257366 unique patients in the admissions data file.</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $1 }&#39; | 
 tail -n+2 | sort | uniq | wc -l</code></pre>
 <pre><code>## 257366</code></pre>
-<p>Display all possible values in the variable <code>admission_type</code>:</p>
+<p>Display all possible values in the variable <code>admission_type</code> and their counts:</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $6 }&#39; | 
 tail -n+2 | sort | uniq -c</code></pre>
 <pre><code>##    7259 AMBULATORY OBSERVATION
@@ -545,7 +544,7 @@ tail -n+2 | sort | uniq -c</code></pre>
 ##   55532 OBSERVATION ADMIT
 ##   41103 SURGICAL SAME DAY ADMISSION
 ##   47970 URGENT</code></pre>
-<p>Display all possible values in the variable <code>admission_location</code>:</p>
+<p>Display all possible values in the variable <code>admission_location</code> and their counts:</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $7 }&#39; | 
 tail -n+2 | sort | uniq -c</code></pre>
 <pre><code>##   60437 
@@ -560,18 +559,18 @@ tail -n+2 | sort | uniq -c</code></pre>
 ##   39150 TRANSFER FROM HOSPITAL
 ##    4069 TRANSFER FROM SKILLED NURSING FACILITY
 ##   16715 WALK-IN/SELF REFERRAL</code></pre>
-<p>Display all possible values in the variable <code>insurance</code>:</p>
+<p>Display all possible values in the variable <code>insurance</code> and their counts:</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $9 }&#39; | 
 tail -n+2 | sort | uniq -c</code></pre>
 <pre><code>##   50962 Medicaid
 ##  171492 Medicare
 ##  302066 Other</code></pre>
-<p>Display all possible values in the variable <code>language</code>:</p>
+<p>Display all possible values in the variable <code>language</code> and their counts:</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $10 }&#39; | 
 tail -n+2 | sort | uniq -c</code></pre>
 <pre><code>##   46231 ?
 ##  478289 ENGLISH</code></pre>
-<p>Display all possible values in the variable <code>marital_status</code>:</p>
+<p>Display all possible values in the variable <code>marital_status</code> and their counts:</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $11 }&#39; | 
 tail -n+2 | sort | uniq -c</code></pre>
 <pre><code>##   66133 
@@ -579,7 +578,7 @@ tail -n+2 | sort | uniq -c</code></pre>
 ##  195326 MARRIED
 ##  180453 SINGLE
 ##   48846 WIDOWED</code></pre>
-<p>Display all possible values in the variable <code>ethnicity</code>:</p>
+<p>Display all possible values in the variable <code>ethnicity</code> and their counts:</p>
 <pre class="bash"><code>zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F, &#39;{ print $12 }&#39; | 
 tail -n+2 | sort | uniq -c</code></pre>
 <pre><code>##    1536 AMERICAN INDIAN/ALASKA NATIVE
@@ -596,24 +595,47 @@ tail -n+2 | sort | uniq -c</code></pre>
 <ol style="list-style-type: decimal">
 <li><p>You and your friend just have finished reading <em>Pride and Prejudice</em> by Jane Austen. Among the four main characters in the book, Elizabeth, Jane, Lydia, and Darcy, your friend thinks that Darcy was the most mentioned. You, however, are certain it was Elizabeth. Obtain the full text of the novel from <a href="http://www.gutenberg.org/cache/epub/42671/pg42671.txt" class="uri">http://www.gutenberg.org/cache/epub/42671/pg42671.txt</a> and save to your local folder.</p>
 <pre class="bash"><code>curl http://www.gutenberg.org/cache/epub/42671/pg42671.txt &gt; pride_and_prejudice.txt</code></pre>
+<pre><code>##   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+##                                  Dload  Upload   Total   Spent    Left  Speed
+## 
+ 0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+13  708k   13   98k    0     0   161k      0  0:00:04 --:--:--  0:00:04  161k
+100  708k  100  708k    0     0   549k      0  0:00:01  0:00:01 --:--:--  549k</code></pre>
 <p>Do <strong>not</strong> put this text file <code>pride_and_prejudice.txt</code> in Git. Using a <code>for</code> loop, how would you tabulate the number of times each of the four characters is mentioned?</p></li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<p>Elizabeth is mentioned 634 times, Jane 294 times, Lydia 170 times, and Darcy 417 times.</p>
+<pre class="bash"><code>for name in Elizabeth Jane Lydia Darcy
+  do
+    grep -o $name pride_and_prejudice.txt | wc -l
+  done</code></pre>
+<pre><code>## 634
+## 294
+## 170
+## 417</code></pre>
+<ol start="2" style="list-style-type: decimal">
 <li><p>What’s the difference between the following two commands?</p>
 <pre class="bash"><code>echo &#39;hello, world&#39; &gt; test1.txt</code></pre>
 <p>and</p>
 <pre class="bash"><code>echo &#39;hello, world&#39; &gt;&gt; test2.txt</code></pre></li>
+</ol>
+<p><strong>Solution</strong>: <code>&gt;</code> directs the output of echo to the test1.txt file, while <code>&gt;&gt;</code> appends the output to the test2.txt file.</p>
+<ol start="3" style="list-style-type: decimal">
 <li><p>Using your favorite text editor (e.g., <code>vi</code>), type the following and save the file as <code>middle.sh</code>:</p>
 <pre class="bash"><code>#!/bin/sh
 # Select lines from the middle of a file.
 # Usage: bash middle.sh filename end_line num_lines
 head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 <p>Using <code>chmod</code> make the file executable by the owner, and run</p>
-<pre class="bash"><code>./middle.sh pride_and_prejudice.txt 20 5</code></pre>
-<p>Explain the output. Explain the meaning of <code>&quot;$1&quot;</code>, <code>&quot;$2&quot;</code>, and <code>&quot;$3&quot;</code> in this shell script. Why do we need the first line of the shell script?</p></li>
+<pre class="bash"><code>./middle.sh pride_and_prejudice.txt 20 5</code></pre></li>
 </ol>
+<p>Explain the output. Explain the meaning of <code>&quot;$1&quot;</code>, <code>&quot;$2&quot;</code>, and <code>&quot;$3&quot;</code> in this shell script. Why do we need the first line of the shell script?</p>
+<p><strong>Solution</strong>:</p>
+<p>The first line of the shell script specifies which shell to use when executing this script. The middle.sh outputs the last few lines before a specified line number from the input file. Here, <code>&quot;$1&quot;</code> specifies the input file, e.g. <code>pride_and_prejudice.txt</code>. <code>&quot;$2&quot;</code> indicates the line number to end at, e.g. the 20th line, and <code>&quot;$3&quot;</code> indicates the number of last few lines to output, e.g. the last 5 lines. In the example, we want the last 5 lines ending at the 20th line of the pride_and_prejudice.txt file.</p>
 <div id="q4.-more-fun-with-linux" class="section level3">
 <h3>Q4. More fun with Linux</h3>
 <p>Try these commands in Bash and interpret the results: <code>cal</code>, <code>cal 2021</code>, <code>cal 9 1752</code> (anything unusual?), <code>date</code>, <code>hostname</code>, <code>arch</code>, <code>uname -a</code>, <code>uptime</code>, <code>who am i</code>, <code>who</code>, <code>w</code>, <code>id</code>, <code>last | head</code>, <code>echo {con,pre}{sent,fer}{s,ed}</code>, <code>time sleep 5</code>, <code>history | tail</code>.</p>
-<p><strong>Solution</strong>: <code>cal</code> displays the calendar of current month:</p>
+<p><strong>Solution</strong>: <code>cal</code> displays the calendar of the current month:</p>
 <pre class="bash"><code>cal</code></pre>
 <pre><code>##     January 2021    
 ## Su Mo Tu We Th Fr Sa
@@ -623,7 +645,7 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 ## 17 18 19 20 21 22 23
 ## 24 25 26 27 28 29 30
 ## 31</code></pre>
-<p><code>cal 2021</code> displays ??:</p>
+<p><code>cal 2021</code> displays the calender of year 2021:</p>
 <pre class="bash"><code>cal 2021</code></pre>
 <pre><code>##                                2021                               
 ## 
@@ -659,6 +681,69 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 ## 17 18 19 20 21 22 23   21 22 23 24 25 26 27   19 20 21 22 23 24 25
 ## 24 25 26 27 28 29 30   28 29 30               26 27 28 29 30 31
 ## 31</code></pre>
+<p><code>cal 9 1752</code> displays the calendar for September of 1972. It is missing days 3 to 13, because these 11 days were skipped for leap year adjustments.</p>
+<pre class="bash"><code>cal 9 1752</code></pre>
+<pre><code>##    September 1752   
+## Su Mo Tu We Th Fr Sa
+##        1  2 14 15 16
+## 17 18 19 20 21 22 23
+## 24 25 26 27 28 29 30</code></pre>
+<p><code>date</code> displays the current time and date.</p>
+<pre class="bash"><code>date</code></pre>
+<pre><code>## Thu Jan 21 15:28:24 UTC 2021</code></pre>
+<p><code>hostname</code> shows the system’s host name.</p>
+<pre class="bash"><code>hostname</code></pre>
+<pre><code>## ucla-biostat-203b</code></pre>
+<p><code>arch</code> displays the machine hardware name.</p>
+<pre class="bash"><code>arch</code></pre>
+<pre><code>## x86_64</code></pre>
+<p><code>uname -a</code> prints system information. <code>-a</code> specifies printing all of the following information: kernel name, network and hostname, kernel release, kernel version, machine hardware name, processor type, hardware platform, and operating system.</p>
+<pre class="bash"><code>uname -a</code></pre>
+<pre><code>## Linux ucla-biostat-203b 3.10.0-1160.6.1.el7.x86_64 #1 SMP Tue Nov 17 13:59:11 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux</code></pre>
+<p><code>uptime</code> displays how long the system has been running.</p>
+<pre class="bash"><code>uptime</code></pre>
+<pre><code>##  15:28:24 up 17 days, 17:39,  1 user,  load average: 0.21, 0.06, 0.06</code></pre>
+<p><code>who am i</code> displays the username.</p>
+<pre class="bash"><code>whoami</code></pre>
+<pre><code>## jyixzhou</code></pre>
+<p><code>who</code> displays the users who are logged on the server.</p>
+<pre class="bash"><code>who</code></pre>
+<pre><code>## filipovicmilan271 pts/7        2021-01-21 06:03 (110.3.236.35.bc.googleusercontent.com)</code></pre>
+<p><code>w</code> displays who is logged on and what they are doing on the server.</p>
+<pre class="bash"><code>w</code></pre>
+<pre><code>##  15:28:24 up 17 days, 17:39,  1 user,  load average: 0.21, 0.06, 0.06
+## USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+## filipovi pts/7    110.3.236.35.bc. 06:03    9:19m  0.06s  0.06s -bash</code></pre>
+<p><code>id</code> displays the user and group information for the current user.</p>
+<pre class="bash"><code>id</code></pre>
+<pre><code>## uid=1043(jyixzhou) gid=1045(jyixzhou) groups=1045(jyixzhou) context=system_u:system_r:initrc_t:s0</code></pre>
+<p><code>last | head</code> displays the first ten lines of a list of last logged in users.</p>
+<pre class="bash"><code>last | head</code></pre>
+<pre><code>## haoyunj  pts/0        101.93.71.50     Thu Jan 21 13:38 - 14:07  (00:29)    
+## haoyunj  pts/1        101.93.71.50     Thu Jan 21 13:08 - 13:30  (00:22)    
+## haoyunj  pts/0        101.93.71.50     Thu Jan 21 12:53 - 13:15  (00:22)    
+## haoyunj  pts/0        101.93.71.50     Thu Jan 21 12:27 - 12:50  (00:22)    
+## valentin pts/4        47.156.178.126   Thu Jan 21 06:17 - 06:29  (00:12)    
+## filipovi pts/7        110.3.236.35.bc. Thu Jan 21 06:03   still logged in   
+## linyuzho pts/5        s-169-232-70-224 Thu Jan 21 05:32 - 06:35  (01:02)    
+## kmishimo pts/6        ip174-67-246-239 Thu Jan 21 05:00 - 05:32  (00:32)    
+## haoyunj  pts/5        101.93.71.50     Thu Jan 21 04:59 - 05:04  (00:04)    
+## valentin pts/4        47.156.178.126   Thu Jan 21 04:57 - 06:15  (01:18)</code></pre>
+<p><code>echo {con,pre}{sent,fer}{s,ed}</code> displays all 8 combinations from choosing one element from each of the three lists.</p>
+<pre class="bash"><code>echo {con,pre}{sent,fer}{s,ed}</code></pre>
+<pre><code>## consents consented confers confered presents presented prefers prefered</code></pre>
+<p><code>time</code> is used to time the execution of a script, and <code>sleep</code> is used to delay for a specified amount of time. Overall, <code>time sleep 5</code> asks to wait for 5 seconds before execution.</p>
+<pre class="bash"><code>time sleep 5</code></pre>
+<pre><code>## 
+## real 0m5.002s
+## user 0m0.000s
+## sys  0m0.002s</code></pre>
+<p><code>history | tail</code></p>
+<pre class="bash"><code>echo &quot;abc&quot;
+set -o history
+history | tail</code></pre>
+<pre><code>## abc
+##     1  history | tail</code></pre>
 </div>
 </div>
 
