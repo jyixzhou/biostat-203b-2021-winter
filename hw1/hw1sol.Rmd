@@ -70,6 +70,7 @@ ls -l /usr/203b-data/mimic-iv/icu
 ```
 
 The following information is obtained using the `man` command. 
+
 zcat uncompresses a list of files writes the uncompressed data on standard output. 
 
 zless and zmore are used to examine compressed or plain text files one screenful at a time on a soft-copy terminal. 
@@ -282,10 +283,10 @@ echo {con,pre}{sent,fer}{s,ed}
 ```{bash}
 time sleep 5
 ```
-`history | tail`
+`history | tail` displays the first few lines from the history of commands in the current session. 
 ```{bash}
-echo "abc"
 set -o history
+echo "abc"
 history | tail
 ```
 

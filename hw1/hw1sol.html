@@ -483,7 +483,8 @@ summary {
 ## -rw-r--r--. 1 huazhou huazhou  328835832 Jan 11 02:14 inputevents.csv.gz
 ## -rw-r--r--. 1 huazhou huazhou   35300863 Jan 11 02:25 outputevents.csv.gz
 ## -rw-r--r--. 1 huazhou huazhou   19362097 Jan 11 02:14 procedureevents.csv.gz</code></pre>
-<p>The following information is obtained using the <code>man</code> command. zcat uncompresses a list of files writes the uncompressed data on standard output.</p>
+<p>The following information is obtained using the <code>man</code> command.</p>
+<p>zcat uncompresses a list of files writes the uncompressed data on standard output.</p>
 <p>zless and zmore are used to examine compressed or plain text files one screenful at a time on a soft-copy terminal.</p>
 <p>zgrep searches possibly compressed files for a regular expression.</p>
 <pre class="bash"><code>man zcat
@@ -599,9 +600,8 @@ tail -n+2 | sort | uniq -c</code></pre>
 ##                                  Dload  Upload   Total   Spent    Left  Speed
 ## 
  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
- 0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-71  708k   71  502k    0     0   437k      0  0:00:01  0:00:01 --:--:--  437k
-100  708k  100  708k    0     0   550k      0  0:00:01  0:00:01 --:--:--  550k</code></pre>
+58  708k   58  416k    0     0   497k      0  0:00:01 --:--:--  0:00:01  497k
+100  708k  100  708k    0     0   680k      0  0:00:01  0:00:01 --:--:--  681k</code></pre>
 <p>Do <strong>not</strong> put this text file <code>pride_and_prejudice.txt</code> in Git. Using a <code>for</code> loop, how would you tabulate the number of times each of the four characters is mentioned?</p></li>
 </ol>
 <p><strong>Solution</strong>:</p>
@@ -691,7 +691,7 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 ## 24 25 26 27 28 29 30</code></pre>
 <p><code>date</code> displays the current time and date.</p>
 <pre class="bash"><code>date</code></pre>
-<pre><code>## Thu Jan 21 15:31:16 UTC 2021</code></pre>
+<pre><code>## Fri Jan 22 00:55:17 UTC 2021</code></pre>
 <p><code>hostname</code> shows the system’s host name.</p>
 <pre class="bash"><code>hostname</code></pre>
 <pre><code>## ucla-biostat-203b</code></pre>
@@ -703,48 +703,61 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 <pre><code>## Linux ucla-biostat-203b 3.10.0-1160.6.1.el7.x86_64 #1 SMP Tue Nov 17 13:59:11 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux</code></pre>
 <p><code>uptime</code> displays how long the system has been running.</p>
 <pre class="bash"><code>uptime</code></pre>
-<pre><code>##  15:31:16 up 17 days, 17:42,  1 user,  load average: 0.44, 0.14, 0.08</code></pre>
+<pre><code>##  00:55:18 up 18 days,  3:06,  7 users,  load average: 1.76, 1.77, 1.70</code></pre>
 <p><code>who am i</code> displays the username.</p>
 <pre class="bash"><code>whoami</code></pre>
 <pre><code>## jyixzhou</code></pre>
 <p><code>who</code> displays the users who are logged on the server.</p>
 <pre class="bash"><code>who</code></pre>
-<pre><code>## filipovicmilan271 pts/7        2021-01-21 06:03 (110.3.236.35.bc.googleusercontent.com)</code></pre>
+<pre><code>## jyixzhou pts/0        2021-01-22 00:13 (cpe84948c862443-cm84948c862440.cpe.net.fido.ca)
+## filipovicmilan271 pts/7        2021-01-21 06:03 (110.3.236.35.bc.googleusercontent.com)
+## germc3   pts/8        2021-01-21 22:27 (cpe-172-117-252-49.socal.res.rr.com)
+## spendlove.sj pts/13       2021-01-21 23:35 (cpe-172-117-248-147.socal.res.rr.com)
+## elviscuihan pts/15       2021-01-22 00:51 (115.206.116.237)
+## haoyunj  pts/17       2021-01-22 00:46 (101.93.71.50)
+## germc3   pts/18       2021-01-22 00:43 (cpe-172-117-252-49.socal.res.rr.com)</code></pre>
 <p><code>w</code> displays who is logged on and what they are doing on the server.</p>
 <pre class="bash"><code>w</code></pre>
-<pre><code>##  15:31:17 up 17 days, 17:42,  1 user,  load average: 0.44, 0.14, 0.08
+<pre><code>##  00:55:18 up 18 days,  3:06,  7 users,  load average: 1.76, 1.77, 1.70
 ## USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
-## filipovi pts/7    110.3.236.35.bc. 06:03    9:22m  0.06s  0.06s -bash</code></pre>
+## jyixzhou pts/0    cpe84948c862443- 00:13   39:58   0.04s  0.04s -bash
+## filipovi pts/7    110.3.236.35.bc. Thu06   18:46m  0.06s  0.06s -bash
+## germc3   pts/8    cpe-172-117-252- 22:27   12:22   0.15s  0.15s -bash
+## spendlov pts/13   cpe-172-117-248- 23:35    1:19m  0.04s  0.00s gzip -dc -- /usr/203b-data/mimic-iv/core/admissions.csv.gz
+## elviscui pts/15   115.206.116.237  00:51   14.00s  0.05s  0.05s -bash
+## haoyunj  pts/17   101.93.71.50     00:46    7:10   0.04s  0.04s -bash
+## germc3   pts/18   cpe-172-117-252- 00:43    7:26   0.09s  0.09s -bash</code></pre>
 <p><code>id</code> displays the user and group information for the current user.</p>
 <pre class="bash"><code>id</code></pre>
 <pre><code>## uid=1043(jyixzhou) gid=1045(jyixzhou) groups=1045(jyixzhou) context=system_u:system_r:initrc_t:s0</code></pre>
 <p><code>last | head</code> displays the first ten lines of a list of last logged in users.</p>
 <pre class="bash"><code>last | head</code></pre>
-<pre><code>## haoyunj  pts/0        101.93.71.50     Thu Jan 21 13:38 - 14:07  (00:29)    
-## haoyunj  pts/1        101.93.71.50     Thu Jan 21 13:08 - 13:30  (00:22)    
-## haoyunj  pts/0        101.93.71.50     Thu Jan 21 12:53 - 13:15  (00:22)    
-## haoyunj  pts/0        101.93.71.50     Thu Jan 21 12:27 - 12:50  (00:22)    
-## valentin pts/4        47.156.178.126   Thu Jan 21 06:17 - 06:29  (00:12)    
-## filipovi pts/7        110.3.236.35.bc. Thu Jan 21 06:03   still logged in   
-## linyuzho pts/5        s-169-232-70-224 Thu Jan 21 05:32 - 06:35  (01:02)    
-## kmishimo pts/6        ip174-67-246-239 Thu Jan 21 05:00 - 05:32  (00:32)    
-## haoyunj  pts/5        101.93.71.50     Thu Jan 21 04:59 - 05:04  (00:04)    
-## valentin pts/4        47.156.178.126   Thu Jan 21 04:57 - 06:15  (01:18)</code></pre>
+<pre><code>## zianzhua pts/5        110.88.97.219    Fri Jan 22 00:52 - 00:53  (00:00)    
+## elviscui pts/15       115.206.116.237  Fri Jan 22 00:51   still logged in   
+## haoyunj  pts/17       101.93.71.50     Fri Jan 22 00:46   still logged in   
+## germc3   pts/18       cpe-172-117-252- Fri Jan 22 00:43   still logged in   
+## jihcai   pts/17       ip68-6-101-100.s Fri Jan 22 00:34 - 00:43  (00:09)    
+## elviscui pts/16       115.206.116.237  Fri Jan 22 00:28 - 00:50  (00:22)    
+## kmishimo pts/16       ip174-67-246-239 Fri Jan 22 00:22 - 00:25  (00:03)    
+## jyixzhou pts/0        cpe84948c862443- Fri Jan 22 00:13   still logged in   
+## spendlov pts/13       cpe-172-117-248- Thu Jan 21 23:35   still logged in   
+## hunanzho pts/11       47.145.202.194   Thu Jan 21 23:28 - 00:34  (01:06)</code></pre>
 <p><code>echo {con,pre}{sent,fer}{s,ed}</code> displays all 8 combinations from choosing one element from each of the three lists.</p>
 <pre class="bash"><code>echo {con,pre}{sent,fer}{s,ed}</code></pre>
 <pre><code>## consents consented confers confered presents presented prefers prefered</code></pre>
 <p><code>time</code> is used to time the execution of a script, and <code>sleep</code> is used to delay for a specified amount of time. Overall, <code>time sleep 5</code> asks to wait for 5 seconds before execution.</p>
 <pre class="bash"><code>time sleep 5</code></pre>
 <pre><code>## 
-## real 0m5.003s
+## real 0m5.002s
 ## user 0m0.002s
 ## sys  0m0.000s</code></pre>
-<p><code>history | tail</code></p>
-<pre class="bash"><code>echo &quot;abc&quot;
-set -o history
+<p><code>history | tail</code> displays the first few lines from the history of commands in the current session.</p>
+<pre class="bash"><code>set -o history
+echo &quot;abc&quot;
 history | tail</code></pre>
 <pre><code>## abc
-##     1  history | tail</code></pre>
+##     1  echo &quot;abc&quot;
+##     2  history | tail</code></pre>
 </div>
 </div>
 
