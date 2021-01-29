@@ -50,9 +50,12 @@ There are quite a few utilities in R for reading data files. Let us test the spe
 
 In this homework, we stick to the tidyverse. 
 
-**Solution**:
+**Solution**: Of the three methods, `read.csv` from base R is the slowest and `fread` from the data.table package is the fastest. 
 ```{r}
-#read.csv(str_c(mimic_path, '/core/admissions.csv.gz')) %>% head()
+#system.time(read.csv(str_c(mimic_path, '/core/admissions.csv.gz')))
+#the above line is commented out to shorten the knitting time
+system.time(read_csv(str_c(mimic_path, '/core/admissions.csv.gz')))
+system.time(fread(str_c(mimic_path, '/core/admissions.csv.gz')))
 ```
 
 ## Q3. ICU stays

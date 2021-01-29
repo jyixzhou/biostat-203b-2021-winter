@@ -500,8 +500,34 @@ if (str_detect(os, &quot;Linux&quot;)) {
 <h2>Q2. <code>read.csv</code> (base R) vs <code>read_csv</code> (tidyverse) vs <code>fread</code> (data.table)</h2>
 <p>There are quite a few utilities in R for reading data files. Let us test the speed of reading a moderate sized compressed csv file, <code>admissions.csv.gz</code>, by three programs: <code>read.csv</code> in base R, <code>read_csv</code> in tidyverse, and <code>fread</code> in the popular data.table package. Is there any speed difference?</p>
 <p>In this homework, we stick to the tidyverse.</p>
-<p><strong>Solution</strong>:</p>
-<pre class="r"><code>#read.csv(str_c(mimic_path, &#39;/core/admissions.csv.gz&#39;)) %&gt;% head()</code></pre>
+<p><strong>Solution</strong>: Of the three methods, <code>read.csv</code> from base R is the slowest and <code>fread</code> from the data.table package is the fastest.</p>
+<pre class="r"><code>#system.time(read.csv(str_c(mimic_path, &#39;/core/admissions.csv.gz&#39;)))
+#the above line is commented out to shorten the knitting time
+system.time(read_csv(str_c(mimic_path, &#39;/core/admissions.csv.gz&#39;)))</code></pre>
+<pre><code>## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   subject_id = col_double(),
+##   hadm_id = col_double(),
+##   admittime = col_datetime(format = &quot;&quot;),
+##   dischtime = col_datetime(format = &quot;&quot;),
+##   deathtime = col_datetime(format = &quot;&quot;),
+##   admission_type = col_character(),
+##   admission_location = col_character(),
+##   discharge_location = col_character(),
+##   insurance = col_character(),
+##   language = col_character(),
+##   marital_status = col_character(),
+##   ethnicity = col_character(),
+##   edregtime = col_datetime(format = &quot;&quot;),
+##   edouttime = col_datetime(format = &quot;&quot;),
+##   hospital_expire_flag = col_double()
+## )</code></pre>
+<pre><code>##    user  system elapsed 
+##   4.984   0.263   5.590</code></pre>
+<pre class="r"><code>system.time(fread(str_c(mimic_path, &#39;/core/admissions.csv.gz&#39;)))</code></pre>
+<pre><code>##    user  system elapsed 
+##   5.405   0.310   4.246</code></pre>
 </div>
 <div id="q3.-icu-stays" class="section level2">
 <h2>Q3. ICU stays</h2>
