@@ -68,6 +68,55 @@ system.time(fread(str_c(mimic_path, '/core/admissions.csv.gz')))
 - first ICU unit  
 - last ICU unit  
 
+**Solution**:
+First, read in the `icustays.csv.gz` data. 
+```{r}
+icustays_data <- read_csv(str_c(mimic_path, '/icu/icustays.csv.gz'))
+head(icustays_data)
+```
+- There are 69619 unique `stay_id`.
+```{r}
+icustays_data %>% 
+  distinct(stay_id) %>% 
+  nrow()
+```
+
+- There are 50048 unique `subject_id`. 
+```{r}
+icustays_data %>% 
+  distinct(subject_id) %>% 
+  nrow()
+```
+
+- The distribution of the length of ICU stay, `los`, is skewed to the right. There are several outliers with extremely large values. The mean is 3.9805 and the median is 2.0611. 
+```{r}
+ggplot(icustays_data, aes(los)) +
+  geom_histogram(binwidth = 5)
+summary(icustays_data$los)
+```
+
+- first ICU unit
+```{r}
+# ggplot(icustays_data, aes(first_careunit)) +
+#   geom_bar() + 
+#   coord_flip()
+
+ggplot(icustays_data, 
+       aes(x=reorder(first_careunit, first_careunit, function(x)-length(x)))) +
+  geom_bar() +
+  coord_flip() +
+  xlab("First Care Unit")
+```
+
+- last ICU unit 
+```{r}
+ggplot(icustays_data, 
+       aes(x=reorder(last_careunit, last_careunit, function(x)-length(x)))) +
+  geom_bar() +
+  coord_flip() +
+  xlab("Last Care Unit")
+```
+
 ## Q4. `admission` data
 
 Information of the patients admitted into hospital is available in `ADMISSION.csv.gz`. See <https://mimic-iv.mit.edu/docs/datasets/core/admissions/> for details of each field in this file. Summarize following variables using appropriate graphs. Explain any patterns you observe.   
