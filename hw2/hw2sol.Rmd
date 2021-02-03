@@ -88,19 +88,15 @@ icustays_data %>%
   nrow()
 ```
 
-- The distribution of the length of ICU stay, `los`, is skewed to the right. There are several outliers with extremely large values. The mean is 3.9805 and the median is 2.0611. 
+- The distribution of the length of ICU stay, `los`, is skewed to the right. There are outliers with extremely large values. The mean is 3.9805 and the median is 2.0611. 
 ```{r}
 ggplot(icustays_data, aes(los)) +
   geom_histogram(binwidth = 5)
 summary(icustays_data$los)
 ```
 
-- first ICU unit
+- first ICU unit: the first care unit with the least ICU stays is the Medicine unit, and the first care unit with the most ICU stays is the Medical Intensive Care Unit.  
 ```{r}
-# ggplot(icustays_data, aes(first_careunit)) +
-#   geom_bar() + 
-#   coord_flip()
-
 ggplot(icustays_data, 
        aes(x=reorder(first_careunit, first_careunit, function(x)-length(x)))) +
   geom_bar() +
@@ -108,7 +104,7 @@ ggplot(icustays_data,
   xlab("First Care Unit")
 ```
 
-- last ICU unit 
+- last ICU unit:the last care unit with the least ICU stays is the Neuro Surgical Intensive Care Unit, and the last care unit with the most ICU stays is the Medical Intensive Care Unit.  
 ```{r}
 ggplot(icustays_data, 
        aes(x=reorder(last_careunit, last_careunit, function(x)-length(x)))) +
@@ -143,7 +139,7 @@ Note it is possible that one patient (uniquely identified by the `SUBJECT_ID`) i
 First, read in the `admissions.csv.gz` data. 
 ```{r}
 adm_data <- read_csv(str_c(mimic_path, '/core/admissions.csv.gz'))
-#head(adm_data)
+head(adm_data)
 ```
 - admission year: The number of admissions increases from ~2110 to ~2130. Then there are a consistent number of admissions from ~2130 to ~2190. The number of admissions decreases drastically after ~2190. 
 ```{r admission year}
@@ -190,7 +186,7 @@ adm_data %>%
   geom_col()
 ```
 
-- admission type
+- admission type: EW Emergency has the most admissions, and ambulatory observation has the least admissions. 
 ```{r admission type}
 ggplot(adm_data, 
        aes(x=reorder(admission_type, admission_type, function(x)-length(x)))) +
@@ -208,7 +204,7 @@ adm_data %>%
   geom_histogram(binwidth = 5)
 ```
 
-- admission location
+- admission location: Most admissions take place in the emergency room, and ambulatory surgery transfer has the least admissions. 
 ```{r admission location}
 ggplot(adm_data, 
        aes(x=reorder(admission_location, admission_location, function(x)-length(x)))) +
@@ -217,7 +213,7 @@ ggplot(adm_data,
   xlab("Admission Location")
 ```
 
-- discharge location  
+- discharge location: Most discharges take place at home, and healthcare facility has the least discharges. 
 ```{r discharge location}
 ggplot(adm_data, 
        aes(x=reorder(discharge_location, discharge_location, function(x)-length(x)))) +
@@ -226,17 +222,16 @@ ggplot(adm_data,
   xlab("Discharge Location")
 ```
 
-- insurance  
+- insurance: Most admissions use insurance that is neither Medicare or Medicaid. 
 ```{r insurance}
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
   ggplot(aes(insurance)) +
   geom_bar() +
   coord_flip()
-
 ```
 
-- language  
+- language: Patients from most admissions use English.    
 ```{r language}
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
@@ -245,7 +240,7 @@ adm_data %>%
   coord_flip()
 ```
 
-- marital status 
+- marital status: Most patients from admissions are married, and only a small number of patients from admissions are divorced.   
 ```{r marital status}
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
@@ -255,7 +250,7 @@ adm_data %>%
   xlab("Marital Status")
 ```
 
-- ethnicity  
+- ethnicity: Most patients from admissions are white, and very little patients are American Indian/Alaska Native.  
 ```{r ethnicity}
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
@@ -265,7 +260,17 @@ adm_data %>%
   xlab("Ethnicity")
 ```
 
-- death ????? 
+- death: 98% of patients from admissions survive within the given hospitalization. 
+```{r death}
+prop.table(table(adm_data$hospital_expire_flag))
+adm_data %>% 
+  ggplot(aes(x=reorder(hospital_expire_flag, hospital_expire_flag, 
+                       function(x)-length(x)))) +
+  geom_bar() +
+  coord_flip() +
+  xlab("Hospital Expire Flag") +
+  scale_x_discrete(labels=c("Survival", "Death"))
+```
 
 ## Q5. `patient` data
 
@@ -280,8 +285,10 @@ First, read in the `patients.csv.gz` data.
 patients_data <- read_csv(str_c(mimic_path, '/core/patients.csv.gz'))
 head(patients_data)
 ```
+
+- gender: 55% of the patients are female and 48% of the patients are male.
 ```{r gender}
-table(patients_data$gender)
+prop.table(table(patients_data$gender))
 ggplot(patients_data, aes(gender)) + 
   geom_bar() +
   coord_flip()
@@ -306,7 +313,7 @@ First, read in the `labevents.csv.gz` and `d_labitems.csv.gz` data.
 d_labitems_data <- read_csv(str_c(mimic_path, '/hosp/d_labitems.csv.gz'))
 head(d_labitems_data)
 
-#labevents_data <- read_csv(str_c(mimic_path, '/hosp/labevents.csv.gz'), n_max = 10)
+#labevents_data <- read_csv(str_c(mimic_path, '/hosp/labevents.csv.gz'))
 #head(labevents_data)
 ```
 
