@@ -305,16 +305,28 @@ ggplot(patients_data, aes(anchor_age)) +
 
 `labevents.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/hosp/labevents/>) contains all laboratory measurements for patients. 
 
-We are interested in the lab measurements of creatinine, potassium, sodium, chloride, bicarbonate, hematocrit, white blood cell count, glucose, magnesium, calcium, phosphorus, and lactate. Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
+We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
 
 **Solution**:
 First, read in the `labevents.csv.gz` and `d_labitems.csv.gz` data. 
-```{r}
+```{r read in d_labitems}
 d_labitems_data <- read_csv(str_c(mimic_path, '/hosp/d_labitems.csv.gz'))
 head(d_labitems_data)
+```
+```{r}
+system(str_c("zcat < ", shQuote(str_c(mimic_path, "/hosp/labevents.csv.gz")), 
+             " | head"), intern = TRUE)
+```
 
-#labevents_data <- read_csv(str_c(mimic_path, '/hosp/labevents.csv.gz'))
-#head(labevents_data)
+```{r read in labevents}
+if  (!file.exists("labevents_icustays.csv.gz")) {
+  labevents_data <-
+    fread(str_c(mimic_path, "/hosp/labevents.csv.gz"),
+          select = c("subject_id", "hadm_id", "itemid", "charttime", "valuenum"), nThread = 4)
+  labevents_data %>% 
+    semi_join(icustays_data, by = c("subject_id", "hadm_id")) %>% 
+    fwrite("labevents_icustays.csv.gz", nThread = 4)
+}
 ```
 
 ## Q7. Vitals from chartered events
@@ -324,6 +336,44 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 `chartevents.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/chartevents/>) contains all the charted data available for a patient. During their ICU stay, the primary repository of a patient’s information is their electronic chart. The `ITEMID` variable indicates a single measurement type in the database. The `VALUE` variable is the value measured for `ITEMID`. 
 
 `d_items.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/d_items/>) is the dictionary for the `ITEMID` in `CHARTEVENTS.csv`. Find potential values of `ITEMID` that correspond to systolic blood pressure, i.e., `LABEL` contains the string `systolic`. 
+
+**Solution**: First read in the `d_items.csv.gz` and `chartevents.csv.gz` data.
+
+220045  Heart Rate
+223761	Temperature Fahrenheit
+223762	Temperature Celsius
+229862	Forehead SpO2 Sensor in Place
+226253	SpO2 Desat Limit
+```{r read in d_items}
+d_items_data <- read_csv(str_c(mimic_path, '/icu/d_items.csv.gz'))
+head(d_items_data)
+d_items_data %>% 
+  filter(str_detect(label, regex("blood pressure", ignore_case = T))) %>% 
+  filter(str_detect(label, regex("systolic", ignore_case = T))) %>% 
+  print(width = Inf)
+d_items_data %>% 
+  filter(str_detect(label, regex("SpO2", ignore_case = T))) %>% 
+  print(width = Inf)
+d_items_data %>% 
+  filter(str_detect(label, regex("respiratory", ignore_case = T))) %>% 
+  print(width = Inf)
+```
+
+```{r}
+system(str_c("zcat < ", shQuote(str_c(mimic_path, "/icu/chartevents.csv.gz")), 
+             " | head"), intern = TRUE)
+```
+
+```{r read in chartevents, eval=FALSE}
+if  (!file.exists("chartevents_icustays.csv.gz")) {
+  chartevents_data <-
+    fread(str_c(mimic_path, "/icu/chartevents.csv.gz"),
+          select = c("subject_id", "hadm_id", "itemid", "charttime", "valuenum"), nThread = 4)
+  chartevents_data %>% 
+    semi_join(icustays_data, by = c("subject_id", "hadm_id")) %>% 
+    fwrite("chartevents_icustays.csv.gz", nThread = 4)
+}
+```
 
 ## Q8. Putting things together
 

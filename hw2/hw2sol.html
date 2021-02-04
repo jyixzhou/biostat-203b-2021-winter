@@ -869,7 +869,7 @@ adm_data %&gt;%
 <div id="q6.-lab-results" class="section level2">
 <h2>Q6. Lab results</h2>
 <p><code>labevents.csv.gz</code> (<a href="https://mimic-iv.mit.edu/docs/datasets/hosp/labevents/" class="uri">https://mimic-iv.mit.edu/docs/datasets/hosp/labevents/</a>) contains all laboratory measurements for patients.</p>
-<p>We are interested in the lab measurements of creatinine, potassium, sodium, chloride, bicarbonate, hematocrit, white blood cell count, glucose, magnesium, calcium, phosphorus, and lactate. Find the <code>itemid</code>s of these lab measurements from <code>d_labitems.csv.gz</code> and retrieve a subset of <code>labevents.csv.gz</code> only containing these items.</p>
+<p>We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the <code>itemid</code>s of these lab measurements from <code>d_labitems.csv.gz</code> and retrieve a subset of <code>labevents.csv.gz</code> only containing these items.</p>
 <p><strong>Solution</strong>: First, read in the <code>labevents.csv.gz</code> and <code>d_labitems.csv.gz</code> data.</p>
 <pre class="r"><code>d_labitems_data &lt;- read_csv(str_c(mimic_path, &#39;/hosp/d_labitems.csv.gz&#39;))</code></pre>
 <pre><code>## 
@@ -891,14 +891,175 @@ adm_data %&gt;%
 ## 4  51953 17-Ketosteroids, Urine    Urine            Chemistry  &lt;NA&gt;      
 ## 5  52063 24 Hr                     Blood            Hematology &lt;NA&gt;      
 ## 6  51066 24 hr Calcium             Urine            Chemistry  &lt;NA&gt;</code></pre>
-<pre class="r"><code>#labevents_data &lt;- read_csv(str_c(mimic_path, &#39;/hosp/labevents.csv.gz&#39;))
-#head(labevents_data)</code></pre>
+<pre class="r"><code>system(str_c(&quot;zcat &lt; &quot;, shQuote(str_c(mimic_path, &quot;/hosp/labevents.csv.gz&quot;)), 
+             &quot; | head&quot;), intern = TRUE)</code></pre>
+<pre><code>##  [1] &quot;labevent_id,subject_id,hadm_id,specimen_id,itemid,charttime,storetime,value,valuenum,valueuom,ref_range_lower,ref_range_upper,flag,priority,comments&quot;
+##  [2] &quot;30331194,12455438,24471620,6107018,51277,2151-05-06 04:45:00,2151-05-06 06:24:00,13.9,13.9,%,10.5,15.5,,STAT,&quot;                                       
+##  [3] &quot;30331195,12455438,24471620,6107018,51279,2151-05-06 04:45:00,2151-05-06 06:24:00,3.55,3.55,m/uL,3.9,5.2,abnormal,STAT,&quot;                              
+##  [4] &quot;30331196,12455438,24471620,6107018,51301,2151-05-06 04:45:00,2151-05-06 06:24:00,16.3,16.3,K/uL,4,10,abnormal,STAT,&quot;                                 
+##  [5] &quot;30331197,12455438,24471620,6107018,52167,2151-05-06 04:45:00,2151-05-06 06:24:00,46.7,46.7,fL,35.1,46.3,abnormal,STAT,&quot;                              
+##  [6] &quot;30331199,12455438,24471620,70876201,50882,2151-05-06 04:45:00,2151-05-06 07:05:00,23,23,mEq/L,22,32,,STAT,&quot;                                          
+##  [7] &quot;30331200,12455438,24471620,70876201,50893,2151-05-06 04:45:00,2151-05-06 07:05:00,8.8,8.8,mg/dL,8.4,10.3,,STAT,&quot;                                     
+##  [8] &quot;30331201,12455438,24471620,70876201,50902,2151-05-06 04:45:00,2151-05-06 07:05:00,106,106,mEq/L,96,108,,STAT,&quot;                                       
+##  [9] &quot;30331202,12455438,24471620,70876201,50912,2151-05-06 04:45:00,2151-05-06 07:05:00,0.7,0.7,mg/dL,0.4,1.1,,STAT,&quot;                                      
+## [10] &quot;30331204,12455438,24471620,70876201,50934,2151-05-06 04:45:00,2151-05-06 07:05:00,3,3,,,,,STAT,&quot;</code></pre>
+<pre class="r"><code>if  (!file.exists(&quot;labevents_icustays.csv.gz&quot;)) {
+  labevents_data &lt;-
+    fread(str_c(mimic_path, &quot;/hosp/labevents.csv.gz&quot;),
+          select = c(&quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;itemid&quot;, &quot;charttime&quot;, &quot;valuenum&quot;), nThread = 4)
+  labevents_data %&gt;% 
+    semi_join(icustays_data, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;)) %&gt;% 
+    fwrite(&quot;labevents_icustays.csv.gz&quot;, nThread = 4)
+}</code></pre>
 </div>
 <div id="q7.-vitals-from-chartered-events" class="section level2">
 <h2>Q7. Vitals from chartered events</h2>
 <p>We are interested in the vitals for ICU patients: heart rate, mean and systolic blood pressure (invasive and noninvasive measurements combined), body temperature, SpO2, and respiratory rate.</p>
 <p><code>chartevents.csv.gz</code> (<a href="https://mimic-iv.mit.edu/docs/datasets/icu/chartevents/" class="uri">https://mimic-iv.mit.edu/docs/datasets/icu/chartevents/</a>) contains all the charted data available for a patient. During their ICU stay, the primary repository of a patient’s information is their electronic chart. The <code>ITEMID</code> variable indicates a single measurement type in the database. The <code>VALUE</code> variable is the value measured for <code>ITEMID</code>.</p>
 <p><code>d_items.csv.gz</code> (<a href="https://mimic-iv.mit.edu/docs/datasets/icu/d_items/" class="uri">https://mimic-iv.mit.edu/docs/datasets/icu/d_items/</a>) is the dictionary for the <code>ITEMID</code> in <code>CHARTEVENTS.csv</code>. Find potential values of <code>ITEMID</code> that correspond to systolic blood pressure, i.e., <code>LABEL</code> contains the string <code>systolic</code>.</p>
+<p><strong>Solution</strong>: First read in the <code>d_items.csv.gz</code> and <code>chartevents.csv.gz</code> data.</p>
+<p>220045 Heart Rate 223761 Temperature Fahrenheit 223762 Temperature Celsius 229862 Forehead SpO2 Sensor in Place 226253 SpO2 Desat Limit</p>
+<pre class="r"><code>d_items_data &lt;- read_csv(str_c(mimic_path, &#39;/icu/d_items.csv.gz&#39;))</code></pre>
+<pre><code>## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   itemid = col_double(),
+##   label = col_character(),
+##   abbreviation = col_character(),
+##   linksto = col_character(),
+##   category = col_character(),
+##   unitname = col_character(),
+##   param_type = col_character(),
+##   lownormalvalue = col_double(),
+##   highnormalvalue = col_double()
+## )</code></pre>
+<pre class="r"><code>head(d_items_data)</code></pre>
+<pre><code>## # A tibble: 6 x 9
+##   itemid label abbreviation linksto category unitname param_type lownormalvalue
+##    &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;        &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;               &lt;dbl&gt;
+## 1 220003 ICU … ICU Admissi… dateti… ADT      &lt;NA&gt;     Date and …             NA
+## 2 220045 Hear… HR           charte… Routine… bpm      Numeric                NA
+## 3 220046 Hear… HR Alarm - … charte… Alarms   bpm      Numeric                NA
+## 4 220047 Hear… HR Alarm - … charte… Alarms   bpm      Numeric                NA
+## 5 220048 Hear… Heart Rhythm charte… Routine… &lt;NA&gt;     Text                   NA
+## 6 220050 Arte… ABPs         charte… Routine… mmHg     Numeric                90
+## # … with 1 more variable: highnormalvalue &lt;dbl&gt;</code></pre>
+<pre class="r"><code>d_items_data %&gt;% 
+  filter(str_detect(label, regex(&quot;blood pressure&quot;, ignore_case = T))) %&gt;% 
+  filter(str_detect(label, regex(&quot;systolic&quot;, ignore_case = T))) %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # A tibble: 4 x 9
+##   itemid label                                abbreviation linksto    
+##    &lt;dbl&gt; &lt;chr&gt;                                &lt;chr&gt;        &lt;chr&gt;      
+## 1 220050 Arterial Blood Pressure systolic     ABPs         chartevents
+## 2 220179 Non Invasive Blood Pressure systolic NBPs         chartevents
+## 3 227243 Manual Blood Pressure Systolic Right Manual BPs R chartevents
+## 4 224167 Manual Blood Pressure Systolic Left  Manual BPs L chartevents
+##   category            unitname param_type lownormalvalue highnormalvalue
+##   &lt;chr&gt;               &lt;chr&gt;    &lt;chr&gt;               &lt;dbl&gt;           &lt;dbl&gt;
+## 1 Routine Vital Signs mmHg     Numeric                90             140
+## 2 Routine Vital Signs mmHg     Numeric                NA              NA
+## 3 Routine Vital Signs mmHg     Numeric                NA              NA
+## 4 Routine Vital Signs mmHg     Numeric                NA              NA</code></pre>
+<pre class="r"><code>d_items_data %&gt;% 
+  filter(str_detect(label, regex(&quot;SpO2&quot;, ignore_case = T))) %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # A tibble: 2 x 9
+##   itemid label                         abbreviation                  linksto    
+##    &lt;dbl&gt; &lt;chr&gt;                         &lt;chr&gt;                         &lt;chr&gt;      
+## 1 229862 Forehead SpO2 Sensor in Place Forehead SpO2 Sensor in Place chartevents
+## 2 226253 SpO2 Desat Limit              SpO2 Desat Limit              chartevents
+##   category            unitname param_type lownormalvalue highnormalvalue
+##   &lt;chr&gt;               &lt;chr&gt;    &lt;chr&gt;               &lt;dbl&gt;           &lt;dbl&gt;
+## 1 Routine Vital Signs &lt;NA&gt;     Checkbox               NA              NA
+## 2 Alarms              %        Numeric                NA              NA</code></pre>
+<pre class="r"><code>d_items_data %&gt;% 
+  filter(str_detect(label, regex(&quot;respiratory&quot;, ignore_case = T))) %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # A tibble: 19 x 9
+##    itemid label                                             
+##     &lt;dbl&gt; &lt;chr&gt;                                             
+##  1 220210 Respiratory Rate                                  
+##  2 228709 Respiratory                                       
+##  3 227047 Post-Operative Respiratory (RESPIRAT)             
+##  4 225475 Respiratory Arrest                                
+##  5 228902 Altered Respiratory Status NCP - Expected outcomes
+##  6 228903 Altered Respiratory Status NCP - Goal             
+##  7 228905 Altered Respiratory Status NCP - Interventions    
+##  8 228907 Altered Respiratory Status NCP - outcomes met     
+##  9 229090 Altered Respiratory Status NCP - Plan revised     
+## 10 229091 Altered Respiratory Status NCP - Problem resolved 
+## 11 224688 Respiratory Rate (Set)                            
+## 12 224689 Respiratory Rate (spontaneous)                    
+## 13 224690 Respiratory Rate (Total)                          
+## 14 229425 ROS-Respiratory                                   
+## 15 224745 Respiratory Quotient                              
+## 16 229563 Plan-Respiratory                                  
+## 17 227032 Non-Operative Respiratory (RESPIRAT)              
+## 18 223985 Respiratory Pattern                               
+## 19 223990 Respiratory Effort                                
+##    abbreviation                   linksto         category             unitname
+##    &lt;chr&gt;                          &lt;chr&gt;           &lt;chr&gt;                &lt;chr&gt;   
+##  1 RR                             chartevents     Respiratory          insp/min
+##  2 Respiratory                    chartevents     MD Progress Note     &lt;NA&gt;    
+##  3 Respiratory Post-Operative     chartevents     Scores - APACHE IV   &lt;NA&gt;    
+##  4 Respiratory Arrest             procedureevents 3-Significant Events None    
+##  5 ARS NCP - Expected outcomes    chartevents     Care Plans           &lt;NA&gt;    
+##  6 ARS NCP - Goal                 chartevents     Care Plans           &lt;NA&gt;    
+##  7 ARS NCP - Interventions        chartevents     Care Plans           &lt;NA&gt;    
+##  8 ARS NCP - outcomes met         chartevents     Care Plans           &lt;NA&gt;    
+##  9 ARS NCP - Plan revised         chartevents     Care Plans           &lt;NA&gt;    
+## 10 ARS NCP - Problem resolved     chartevents     Care Plans           &lt;NA&gt;    
+## 11 Respiratory Rate (Set)         chartevents     Respiratory          insp/min
+## 12 Respiratory Rate (spontaneous) chartevents     Respiratory          insp/min
+## 13 Respiratory Rate (Total)       chartevents     Respiratory          insp/min
+## 14 ROS-Respiratory                chartevents     MD Progress Note     &lt;NA&gt;    
+## 15 RQ                             chartevents     Respiratory          None    
+## 16 Plan-Respiratory               chartevents     MD Progress Note     &lt;NA&gt;    
+## 17 Respiratory Non-Operative      chartevents     Scores - APACHE IV   &lt;NA&gt;    
+## 18 Respiratory Pattern            chartevents     Pulmonary            &lt;NA&gt;    
+## 19 Respiratory Effort             chartevents     Pulmonary            &lt;NA&gt;    
+##    param_type lownormalvalue highnormalvalue
+##    &lt;chr&gt;               &lt;dbl&gt;           &lt;dbl&gt;
+##  1 Numeric                NA              NA
+##  2 Text                   NA              NA
+##  3 Text                   NA              NA
+##  4 Processes              NA              NA
+##  5 Text                   NA              NA
+##  6 Text                   NA              NA
+##  7 Text                   NA              NA
+##  8 Text                   NA              NA
+##  9 Text                   NA              NA
+## 10 Text                   NA              NA
+## 11 Numeric                NA              NA
+## 12 Numeric                NA              NA
+## 13 Numeric                NA              36
+## 14 Text                   NA              NA
+## 15 Numeric                NA              NA
+## 16 Text                   NA              NA
+## 17 Text                   NA              NA
+## 18 Text                   NA              NA
+## 19 Text                   NA              NA</code></pre>
+<pre class="r"><code>system(str_c(&quot;zcat &lt; &quot;, shQuote(str_c(mimic_path, &quot;/icu/chartevents.csv.gz&quot;)), 
+             &quot; | head&quot;), intern = TRUE)</code></pre>
+<pre><code>##  [1] &quot;subject_id,hadm_id,stay_id,charttime,storetime,itemid,value,valuenum,valueuom,warning&quot;                    
+##  [2] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:51:00,223990,Normal,,,0&quot;                     
+##  [3] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:51:00,223991,Weak,,,0&quot;                       
+##  [4] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,223999,Teeth/Tissue WNL,,,0&quot;           
+##  [5] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,224000,Patent,,,0&quot;                     
+##  [6] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,224001,NPO,,,0&quot;                        
+##  [7] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,224003,Soft,,,0&quot;                       
+##  [8] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,224004,Present,,,0&quot;                    
+##  [9] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,224015,Indwelling Urinary Catheter,,,0&quot;
+## [10] &quot;19999068,21606769,31096823,2161-08-30 20:00:00,2161-08-30 19:52:00,224016,Yellow,,,0&quot;</code></pre>
+<pre class="r"><code>if  (!file.exists(&quot;chartevents_icustays.csv.gz&quot;)) {
+  chartevents_data &lt;-
+    fread(str_c(mimic_path, &quot;/icu/chartevents.csv.gz&quot;),
+          select = c(&quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;itemid&quot;, &quot;charttime&quot;, &quot;valuenum&quot;), nThread = 4)
+  chartevents_data %&gt;% 
+    semi_join(icustays_data, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;)) %&gt;% 
+    fwrite(&quot;chartevents_icustays.csv.gz&quot;, nThread = 4)
+}</code></pre>
 </div>
 <div id="q8.-putting-things-together" class="section level2">
 <h2>Q8. Putting things together</h2>
