@@ -90,16 +90,27 @@ icustays_data %>%
 
 - The distribution of the length of ICU stay, `los`, is skewed to the right. There are outliers with extremely large values. The mean is 3.9805 and the median is 2.0611. 
 ```{r}
-ggplot(icustays_data, aes(los)) +
-  geom_histogram(binwidth = 5)
 summary(icustays_data$los)
+
+ggplot(icustays_data, aes(los)) +
+  geom_histogram(binwidth = 5) +
+  labs(x = "Length of Stay in days", 
+       title = "Distribution of length of stays from the entire ICU dataset")
+
+icustays_data %>%
+  filter(los < 50) %>%
+  ggplot(aes(los)) +
+  geom_histogram(binwidth = 5, fill = "darkseagreen4") +
+  labs(x = "Length of Stay in days", 
+       title = "Distribution of length of stays below 50 days")
 ```
 
 - first ICU unit: the first care unit with the least ICU stays is the Medicine unit, and the first care unit with the most ICU stays is the Medical Intensive Care Unit.  
 ```{r}
 ggplot(icustays_data, 
        aes(x=reorder(first_careunit, first_careunit, function(x)-length(x)))) +
-  geom_bar() +
+  geom_bar(aes(fill = first_careunit)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("First Care Unit")
 ```
@@ -108,7 +119,8 @@ ggplot(icustays_data,
 ```{r}
 ggplot(icustays_data, 
        aes(x=reorder(last_careunit, last_careunit, function(x)-length(x)))) +
-  geom_bar() +
+  geom_bar(aes(fill = last_careunit)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("Last Care Unit")
 ```
@@ -141,56 +153,65 @@ First, read in the `admissions.csv.gz` data.
 adm_data <- read_csv(str_c(mimic_path, '/core/admissions.csv.gz'))
 head(adm_data)
 ```
+*The following information about details of each admission is summarized using the entire admissions dataset.*
+
 - admission year: The number of admissions increases from ~2110 to ~2130. Then there are a consistent number of admissions from ~2130 to ~2190. The number of admissions decreases drastically after ~2190. 
 ```{r admission year}
 adm_data$adm_year <- ymd_hms(adm_data$admittime) %>% year() 
 ggplot(adm_data, aes(x = adm_year)) +
-  geom_bar()
+  geom_bar() +
+  labs(x = "admission year")
 ```
 
 - admission month: There are a consistent number of admissions over the 12 months. 
 ```{r admission month}
 adm_data$adm_month <- ymd_hms(adm_data$admittime) %>% month() 
-ggplot(adm_data, aes(x = adm_month)) +
-  geom_bar()
+ggplot(adm_data, aes(x = as.factor(adm_month))) +
+  geom_bar(fill = "darkslategray4") +
+  labs(x = "admission month")
+  
 ```
 
 - admission month day: There are a consistent number of admissions over the first 30 days of the month. There are fewer admissions on Day 31 because not all months have the 31th day. 
 ```{r admmission month day}
 adm_data$adm_month_day <- ymd_hms(adm_data$admittime) %>% mday() 
 ggplot(adm_data, aes(x = adm_month_day)) +
-  geom_bar()
+  geom_bar(fill = "darkolivegreen4") +
+  labs(x = "admission day (of month)")
 ```
 
 - admission week day: There are a consistent number of admissions over the 7 days of the week. 
 ```{r admission week day}
 adm_data$adm_weekday <- ymd_hms(adm_data$admittime) %>% wday() 
-ggplot(adm_data, aes(x = adm_weekday)) +
-  geom_bar()
+ggplot(adm_data, aes(x = as.factor(adm_weekday))) +
+  geom_bar(fill = "lightskyblue4") +
+  labs(x = "admission day (of week)")
 ```
 
 - admission hour: The number of admissions is the highest at 12AM. From 12 AM, the number quickly decreases until 7 AM, where there is a peak of admissions. The number then slowly increases until around 5 PM, and stays high with minor decreases until the end of the day. 
 ```{r admission hour}
 adm_data$adm_hour <- ymd_hms(adm_data$admittime) %>% hour() 
 ggplot(adm_data, aes(x = adm_hour)) +
-  geom_bar()
+  geom_bar(fill = "lightsteelblue4") +
+  labs(x = "admission hour")
 ```
 
 - number of deaths in each year: The number of deaths in each year increases from ~2110 to ~2130, and then stays consistent until ~2190, when it starts to decrease drastically. 
 ```{r number of death by year}
-adm_data$death <- !is.na(adm_data$deathtime)
 adm_data %>% 
   group_by(adm_year) %>% 
-  summarise(death_count = sum(death)) %>% 
+  summarise(death_count = sum(hospital_expire_flag)) %>% 
   ggplot(aes(adm_year, death_count)) +
-  geom_col()
+  geom_col(fill = "mistyrose4") +
+  labs(x = "admission year", y = "death counts by year")
 ```
 
 - admission type: EW Emergency has the most admissions, and ambulatory observation has the least admissions. 
 ```{r admission type}
 ggplot(adm_data, 
        aes(x=reorder(admission_type, admission_type, function(x)-length(x)))) +
-  geom_bar() +
+  geom_bar(aes(fill = admission_type)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("Admission Type")
 ```
@@ -201,14 +222,29 @@ adm_data %>%
   group_by(subject_id) %>% 
   summarise(adm_count = n()) %>% 
   ggplot(aes(adm_count)) +
-  geom_histogram(binwidth = 5)
+  geom_histogram(binwidth = 5) + 
+  labs(x = "admission count by patient", y = "patient count", 
+       title = "Distribution of the number of admissions by patient from 
+       the entire admissions dataset")
+
+adm_data %>% 
+  group_by(subject_id) %>% 
+  summarise(adm_count = n()) %>% 
+  filter(adm_count < 30) %>% 
+  ggplot(aes(adm_count)) +
+  geom_histogram(binwidth = 5) + 
+  labs(x = "admission count by patient", y = "patient count", 
+       title = "Distribution of the number of admissions by patient 
+       with less than 30 admissions")
 ```
 
 - admission location: Most admissions take place in the emergency room, and ambulatory surgery transfer has the least admissions. 
 ```{r admission location}
 ggplot(adm_data, 
-       aes(x=reorder(admission_location, admission_location, function(x)-length(x)))) +
-  geom_bar() +
+       aes(x=reorder(
+         admission_location, admission_location, function(x)-length(x)))) +
+  geom_bar(aes(fill = admission_location)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("Admission Location")
 ```
@@ -216,18 +252,23 @@ ggplot(adm_data,
 - discharge location: Most discharges take place at home, and healthcare facility has the least discharges. 
 ```{r discharge location}
 ggplot(adm_data, 
-       aes(x=reorder(discharge_location, discharge_location, function(x)-length(x)))) +
-  geom_bar() +
+       aes(x=reorder(
+         discharge_location, discharge_location, function(x)-length(x)))) +
+  geom_bar(aes(fill = discharge_location)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("Discharge Location")
 ```
+
+*The following demographic information is summarized by unique patient ID.*
 
 - insurance: Most admissions use insurance that is neither Medicare or Medicaid. 
 ```{r insurance}
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
   ggplot(aes(insurance)) +
-  geom_bar() +
+  geom_bar(aes(fill = insurance)) + 
+  theme(legend.position = "none") + 
   coord_flip()
 ```
 
@@ -236,7 +277,8 @@ adm_data %>%
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
   ggplot(aes(language)) +
-  geom_bar() +
+  geom_bar(aes(fill = language)) + 
+  theme(legend.position = "none") + 
   coord_flip()
 ```
 
@@ -244,8 +286,10 @@ adm_data %>%
 ```{r marital status}
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
-  ggplot(aes(x=reorder(marital_status, marital_status, function(x)-length(x)))) +
-  geom_bar() +
+  ggplot(aes(x=reorder(
+    marital_status, marital_status, function(x)-length(x)))) +
+  geom_bar(aes(fill = marital_status)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("Marital Status")
 ```
@@ -255,7 +299,8 @@ adm_data %>%
 adm_data %>% 
   distinct(subject_id, .keep_all = TRUE) %>% 
   ggplot(aes(x=reorder(ethnicity, ethnicity, function(x)-length(x)))) +
-  geom_bar() +
+  geom_bar(aes(fill = ethnicity)) + 
+  theme(legend.position = "none") + 
   coord_flip() +
   xlab("Ethnicity")
 ```
@@ -264,8 +309,8 @@ adm_data %>%
 ```{r death}
 prop.table(table(adm_data$hospital_expire_flag))
 adm_data %>% 
-  ggplot(aes(x=reorder(hospital_expire_flag, hospital_expire_flag, 
-                       function(x)-length(x)))) +
+  ggplot(aes(x=reorder(
+    hospital_expire_flag, hospital_expire_flag, function(x)-length(x)))) +
   geom_bar() +
   coord_flip() +
   xlab("Hospital Expire Flag") +
@@ -286,19 +331,28 @@ patients_data <- read_csv(str_c(mimic_path, '/core/patients.csv.gz'))
 head(patients_data)
 ```
 
-- gender: 55% of the patients are female and 48% of the patients are male.
+- gender: 52% of the patients are female and 48% of the patients are male.
 ```{r gender}
 prop.table(table(patients_data$gender))
 ggplot(patients_data, aes(gender)) + 
-  geom_bar() +
+  geom_bar(aes(fill = gender)) + 
+  theme(legend.position = "none") + 
   coord_flip()
 ```
 
 For the anchor age variable, there are a large number of subjects with the anchor age of 0. There are no subjects with the anchor age of 1 to ~15. There is a small peak of subjects with the anchor age of 91. 
 ```{r anchor age}
-summary(patients_data$anchor_age)
 ggplot(patients_data, aes(anchor_age)) + 
-  geom_bar()
+  geom_bar(fill = "paleturquoise3") +
+  labs(x = "anchor age", 
+       title = "Distribution of anchor age from the entire patients dataset")
+
+patients_data %>% 
+  filter(anchor_age > 0) %>% 
+  ggplot(aes(anchor_age)) +
+  geom_bar(fill = "paleturquoise4") +
+  labs(x = "anchor age", title = "Distribution of anchor age, removing zeroes")
+
 ```
 
 ## Q6. Lab results
@@ -344,7 +398,7 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 223762	Temperature Celsius
 229862	Forehead SpO2 Sensor in Place
 226253	SpO2 Desat Limit
-```{r read in d_items}
+```{r read in d_items, eval=FALSE}
 d_items_data <- read_csv(str_c(mimic_path, '/icu/d_items.csv.gz'))
 head(d_items_data)
 d_items_data %>% 
@@ -359,7 +413,7 @@ d_items_data %>%
   print(width = Inf)
 ```
 
-```{r}
+```{r, eval=FALSE}
 system(str_c("zcat < ", shQuote(str_c(mimic_path, "/icu/chartevents.csv.gz")), 
              " | head"), intern = TRUE)
 ```
