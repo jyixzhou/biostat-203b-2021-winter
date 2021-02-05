@@ -157,7 +157,7 @@ head(adm_data)
 
 - admission year: The number of admissions increases from ~2110 to ~2130. Then there are a consistent number of admissions from ~2130 to ~2190. The number of admissions decreases drastically after ~2190. 
 ```{r admission year}
-adm_data$adm_year <- ymd_hms(adm_data$admittime) %>% year() 
+adm_data$adm_year <- year(adm_data$admittime) 
 ggplot(adm_data, aes(x = adm_year)) +
   geom_bar() +
   labs(x = "admission year")
@@ -165,7 +165,7 @@ ggplot(adm_data, aes(x = adm_year)) +
 
 - admission month: There are a consistent number of admissions over the 12 months. 
 ```{r admission month}
-adm_data$adm_month <- ymd_hms(adm_data$admittime) %>% month() 
+adm_data$adm_month <- month(adm_data$admittime) 
 ggplot(adm_data, aes(x = as.factor(adm_month))) +
   geom_bar(fill = "darkslategray4") +
   labs(x = "admission month")
@@ -174,7 +174,7 @@ ggplot(adm_data, aes(x = as.factor(adm_month))) +
 
 - admission month day: There are a consistent number of admissions over the first 30 days of the month. There are fewer admissions on Day 31 because not all months have the 31th day. 
 ```{r admmission month day}
-adm_data$adm_month_day <- ymd_hms(adm_data$admittime) %>% mday() 
+adm_data$adm_month_day <- mday(adm_data$admittime) 
 ggplot(adm_data, aes(x = adm_month_day)) +
   geom_bar(fill = "darkolivegreen4") +
   labs(x = "admission day (of month)")
@@ -182,7 +182,7 @@ ggplot(adm_data, aes(x = adm_month_day)) +
 
 - admission week day: There are a consistent number of admissions over the 7 days of the week. 
 ```{r admission week day}
-adm_data$adm_weekday <- ymd_hms(adm_data$admittime) %>% wday() 
+adm_data$adm_weekday <- wday(adm_data$admittime) 
 ggplot(adm_data, aes(x = as.factor(adm_weekday))) +
   geom_bar(fill = "lightskyblue4") +
   labs(x = "admission day (of week)")
@@ -190,7 +190,7 @@ ggplot(adm_data, aes(x = as.factor(adm_weekday))) +
 
 - admission hour: The number of admissions is the highest at 12AM. From 12 AM, the number quickly decreases until 7 AM, where there is a peak of admissions. The number then slowly increases until around 5 PM, and stays high with minor decreases until the end of the day. 
 ```{r admission hour}
-adm_data$adm_hour <- ymd_hms(adm_data$admittime) %>% hour() 
+adm_data$adm_hour <- hour(adm_data$admittime) 
 ggplot(adm_data, aes(x = adm_hour)) +
   geom_bar(fill = "lightsteelblue4") +
   labs(x = "admission hour")
@@ -381,7 +381,21 @@ if  (!file.exists("labevents_icustays.csv.gz")) {
     semi_join(icustays_data, by = c("subject_id", "hadm_id")) %>% 
     fwrite("labevents_icustays.csv.gz", nThread = 4)
 }
+lab_events_data <- read_csv("labevents_icustays.csv.gz")
+head(lab_events_data)
 ```
+
+```{r filter for lab items of interest}
+labs_of_interest <- 
+  c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 50960, 50893, 50813)
+lab_events_data <- lab_events_data %>% 
+  filter(itemid %in% labs_of_interest)
+
+lab_events_data %>% head()
+
+#lab_events_data %>% fwrite("labevents_icustays_selected.csv.gz")
+```
+
 
 ## Q7. Vitals from chartered events
 
@@ -439,7 +453,25 @@ Let us create a tibble for all ICU stays, where rows are
 and columns contains at least following variables  
 
 - all variables in `icustays.csv.gz`  
-- all variables in `admission.csv.gz`  
+- all variables in `admission.csv.gz`
+- all variables in `patients.csv.gz`
 - first lab measurements during ICU stay  
 - first vitals measurement during ICU stay  
 - an indicator variable whether the patient died within 30 days of hospital admission  
+
+```{r}
+icustays_data %>% 
+  # take first ICU stay of each unique patient
+  group_by(subject_id) %>% 
+  slice_min(intime) %>% 
+  # merge admissions data
+  left_join(adm_data, by = c("subject_id", "hadm_id")) %>% 
+  # merge patients data
+  left_join(patients_data, by = "subject_id") %>% 
+  #only keep age at admission > 18
+  mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %>% 
+  filter(age_at_adm > 18)
+
+  
+  
+```
