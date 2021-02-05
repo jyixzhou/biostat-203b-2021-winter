@@ -695,7 +695,7 @@ system.time(read_csv(str_c(mimic_path, &#39;/core/admissions.csv.gz&#39;)))</cod
 <ul>
 <li>admission year: The number of admissions increases from ~2110 to ~2130. Then there are a consistent number of admissions from ~2130 to ~2190. The number of admissions decreases drastically after ~2190.</li>
 </ul>
-<pre class="r"><code>adm_data$adm_year &lt;- ymd_hms(adm_data$admittime) %&gt;% year() 
+<pre class="r"><code>adm_data$adm_year &lt;- year(adm_data$admittime) 
 ggplot(adm_data, aes(x = adm_year)) +
   geom_bar() +
   labs(x = &quot;admission year&quot;)</code></pre>
@@ -703,7 +703,7 @@ ggplot(adm_data, aes(x = adm_year)) +
 <ul>
 <li>admission month: There are a consistent number of admissions over the 12 months.</li>
 </ul>
-<pre class="r"><code>adm_data$adm_month &lt;- ymd_hms(adm_data$admittime) %&gt;% month() 
+<pre class="r"><code>adm_data$adm_month &lt;- month(adm_data$admittime) 
 ggplot(adm_data, aes(x = as.factor(adm_month))) +
   geom_bar(fill = &quot;darkslategray4&quot;) +
   labs(x = &quot;admission month&quot;)</code></pre>
@@ -711,7 +711,7 @@ ggplot(adm_data, aes(x = as.factor(adm_month))) +
 <ul>
 <li>admission month day: There are a consistent number of admissions over the first 30 days of the month. There are fewer admissions on Day 31 because not all months have the 31th day.</li>
 </ul>
-<pre class="r"><code>adm_data$adm_month_day &lt;- ymd_hms(adm_data$admittime) %&gt;% mday() 
+<pre class="r"><code>adm_data$adm_month_day &lt;- mday(adm_data$admittime) 
 ggplot(adm_data, aes(x = adm_month_day)) +
   geom_bar(fill = &quot;darkolivegreen4&quot;) +
   labs(x = &quot;admission day (of month)&quot;)</code></pre>
@@ -719,7 +719,7 @@ ggplot(adm_data, aes(x = adm_month_day)) +
 <ul>
 <li>admission week day: There are a consistent number of admissions over the 7 days of the week.</li>
 </ul>
-<pre class="r"><code>adm_data$adm_weekday &lt;- ymd_hms(adm_data$admittime) %&gt;% wday() 
+<pre class="r"><code>adm_data$adm_weekday &lt;- wday(adm_data$admittime) 
 ggplot(adm_data, aes(x = as.factor(adm_weekday))) +
   geom_bar(fill = &quot;lightskyblue4&quot;) +
   labs(x = &quot;admission day (of week)&quot;)</code></pre>
@@ -727,7 +727,7 @@ ggplot(adm_data, aes(x = as.factor(adm_weekday))) +
 <ul>
 <li>admission hour: The number of admissions is the highest at 12AM. From 12 AM, the number quickly decreases until 7 AM, where there is a peak of admissions. The number then slowly increases until around 5 PM, and stays high with minor decreases until the end of the day.</li>
 </ul>
-<pre class="r"><code>adm_data$adm_hour &lt;- ymd_hms(adm_data$admittime) %&gt;% hour() 
+<pre class="r"><code>adm_data$adm_hour &lt;- hour(adm_data$admittime) 
 ggplot(adm_data, aes(x = adm_hour)) +
   geom_bar(fill = &quot;lightsteelblue4&quot;) +
   labs(x = &quot;admission hour&quot;)</code></pre>
@@ -958,7 +958,17 @@ ggplot(adm_data, aes(x = adm_hour)) +
   labevents_data %&gt;% 
     semi_join(icustays_data, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;)) %&gt;% 
     fwrite(&quot;labevents_icustays.csv.gz&quot;, nThread = 4)
-}</code></pre>
+}
+lab_events_data &lt;- read_csv(&quot;labevents_icustays.csv.gz&quot;)
+head(lab_events_data)</code></pre>
+<pre class="r"><code>labs_of_interest &lt;- 
+  c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 50960, 50893, 50813)
+lab_events_data &lt;- lab_events_data %&gt;% 
+  filter(itemid %in% labs_of_interest)
+
+lab_events_data %&gt;% head()
+
+#lab_events_data %&gt;% fwrite(&quot;labevents_icustays_selected.csv.gz&quot;)</code></pre>
 </div>
 <div id="q7.-vitals-from-chartered-events" class="section level2">
 <h2>Q7. Vitals from chartered events</h2>
@@ -1002,14 +1012,25 @@ d_items_data %&gt;%
 <ul>
 <li>all variables in <code>icustays.csv.gz</code><br />
 </li>
-<li>all variables in <code>admission.csv.gz</code><br />
-</li>
+<li>all variables in <code>admission.csv.gz</code></li>
+<li>all variables in <code>patients.csv.gz</code></li>
 <li>first lab measurements during ICU stay<br />
 </li>
 <li>first vitals measurement during ICU stay<br />
 </li>
 <li>an indicator variable whether the patient died within 30 days of hospital admission</li>
 </ul>
+<pre class="r"><code>icustays_data %&gt;% 
+  # take first ICU stay of each unique patient
+  group_by(subject_id) %&gt;% 
+  slice_min(intime) %&gt;% 
+  # merge admissions data
+  left_join(adm_data, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;)) %&gt;% 
+  # merge patients data
+  left_join(patients_data, by = &quot;subject_id&quot;) %&gt;% 
+  #only keep age at admission &gt; 18
+  mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %&gt;% 
+  filter(age_at_adm &gt; 18)</code></pre>
 </div>
 
 

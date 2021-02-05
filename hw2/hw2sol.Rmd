@@ -372,7 +372,7 @@ system(str_c("zcat < ", shQuote(str_c(mimic_path, "/hosp/labevents.csv.gz")),
              " | head"), intern = TRUE)
 ```
 
-```{r read in labevents}
+```{r read in labevents, eval=FALSE}
 if  (!file.exists("labevents_icustays.csv.gz")) {
   labevents_data <-
     fread(str_c(mimic_path, "/hosp/labevents.csv.gz"),
@@ -385,7 +385,7 @@ lab_events_data <- read_csv("labevents_icustays.csv.gz")
 head(lab_events_data)
 ```
 
-```{r filter for lab items of interest}
+```{r filter for lab items of interest, eval=FALSE}
 labs_of_interest <- 
   c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 50960, 50893, 50813)
 lab_events_data <- lab_events_data %>% 
@@ -459,7 +459,7 @@ and columns contains at least following variables
 - first vitals measurement during ICU stay  
 - an indicator variable whether the patient died within 30 days of hospital admission  
 
-```{r}
+```{r eval=FALSE}
 icustays_data %>% 
   # take first ICU stay of each unique patient
   group_by(subject_id) %>% 
