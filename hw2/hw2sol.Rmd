@@ -23,9 +23,9 @@ library(lubridate)
 ```{r}
 os <- sessionInfo()$running
 if (str_detect(os, "Linux")) {
-  mimic_path <- "/usr/203b-data/mimic-iv"
+  mimic_path <- "/usr/203b-data"
 } else if (str_detect(os, "macOS")) {
-  mimic_path <- "/Users/huazhou/Documents/Box Sync/MIMIC/mimic-iv-0.4"
+  mimic_path <- "/Users/julietzhou/Documents/R"
 }
 ```
 
@@ -52,10 +52,10 @@ In this homework, we stick to the tidyverse.
 
 **Solution**: Of the three methods, `read.csv` from base R is the slowest and `fread` from the data.table package is the fastest. 
 ```{r}
-#system.time(read.csv(str_c(mimic_path, '/core/admissions.csv.gz')))
+#system.time(read.csv(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz')))
 #the above line is commented out to shorten the knitting time
-system.time(read_csv(str_c(mimic_path, '/core/admissions.csv.gz')))
-system.time(fread(str_c(mimic_path, '/core/admissions.csv.gz')))
+system.time(read_csv(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz')))
+system.time(fread(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz')))
 ```
 
 ## Q3. ICU stays
@@ -71,8 +71,7 @@ system.time(fread(str_c(mimic_path, '/core/admissions.csv.gz')))
 **Solution**:
 First, read in the `icustays.csv.gz` data. 
 ```{r}
-icustays_data <- read_csv(str_c(mimic_path, '/icu/icustays.csv.gz'))
-head(icustays_data)
+icustays_data <- read_csv(str_c(mimic_path, '/mimic-iv/icu/icustays.csv.gz'))
 ```
 - There are 69619 unique `stay_id`.
 ```{r}
@@ -150,8 +149,7 @@ Note it is possible that one patient (uniquely identified by the `SUBJECT_ID`) i
 **Solution**:
 First, read in the `admissions.csv.gz` data. 
 ```{r}
-adm_data <- read_csv(str_c(mimic_path, '/core/admissions.csv.gz'))
-head(adm_data)
+adm_data <- read_csv(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz'))
 ```
 *The following information about details of each admission is summarized using the entire admissions dataset.*
 
@@ -327,8 +325,7 @@ Explore `patients.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/core/patients
 **Solution**:
 First, read in the `patients.csv.gz` data. 
 ```{r}
-patients_data <- read_csv(str_c(mimic_path, '/core/patients.csv.gz'))
-head(patients_data)
+patients_data <- read_csv(str_c(mimic_path, '/mimic-iv/core/patients.csv.gz'))
 ```
 
 - gender: 52% of the patients are female and 48% of the patients are male.
@@ -361,13 +358,20 @@ patients_data %>%
 
 We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
 
-**Solution**:
+**Solution**: Read in the filtered lab events file generated using linux commands. 
+```{r}
+labevents_data <- fread(
+  str_c(mimic_path, "/mimic-iv-derived-data/labevents_filtered_itemid.csv.gz"))
+```
+
+------
 First, read in the `labevents.csv.gz` and `d_labitems.csv.gz` data. 
-```{r read in d_labitems}
+```{r read in d_labitems, eval=FALSE}
 d_labitems_data <- read_csv(str_c(mimic_path, '/hosp/d_labitems.csv.gz'))
 head(d_labitems_data)
 ```
-```{r}
+
+```{r, eval=FALSE}
 system(str_c("zcat < ", shQuote(str_c(mimic_path, "/hosp/labevents.csv.gz")), 
              " | head"), intern = TRUE)
 ```
@@ -405,7 +409,17 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 
 `d_items.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/d_items/>) is the dictionary for the `ITEMID` in `CHARTEVENTS.csv`. Find potential values of `ITEMID` that correspond to systolic blood pressure, i.e., `LABEL` contains the string `systolic`. 
 
-**Solution**: First read in the `d_items.csv.gz` and `chartevents.csv.gz` data.
+**Solution**: Read in the filtered lab events file generated using linux commands. 
+
+```{r}
+chartevents_data <- fread(
+  str_c(mimic_path,
+        "/mimic-iv-derived-data/chartevents_filtered_itemid.csv.gz"))
+```
+
+--------
+
+First read in the `d_items.csv.gz` and `chartevents.csv.gz` data.
 
 220045  Heart Rate
 223761	Temperature Fahrenheit
