@@ -359,47 +359,28 @@ patients_data %>%
 We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
 
 **Solution**: Read in the filtered lab events file generated using linux commands. 
+
 ```{r}
 labevents_data <- fread(
-  str_c(mimic_path, "/mimic-iv-derived-data/labevents_filtered_itemid.csv.gz"))
+  str_c(mimic_path, "/mimic-iv-derived-data/labevents_filtered_itemid.csv.gz"),
+  header = FALSE,
+  col.names = c("subject_id", "hadm_id", "itemid", "charttime", "valuenum"), 
+  nThread = 4) %>% 
+  as_tibble() %>% 
+  mutate_at(c("subject_id", "hadm_id", "itemid"), as.numeric) %>% 
+  mutate(charttime = ymd_hms(charttime))
 ```
 
-------
-First, read in the `labevents.csv.gz` and `d_labitems.csv.gz` data. 
-```{r read in d_labitems, eval=FALSE}
-d_labitems_data <- read_csv(str_c(mimic_path, '/hosp/d_labitems.csv.gz'))
-head(d_labitems_data)
+This dataset only includes the following lab events of interest: 
+
+```{r}
+d_labitems <- fread(str_c(mimic_path, "/mimic-iv/hosp/d_labitems.csv.gz"))
+labitems_label <- d_labitems %>% 
+  filter(itemid %in% c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 
+             50960, 50893, 50813)) %>% 
+  select(itemid, label) %>% 
+  print()
 ```
-
-```{r, eval=FALSE}
-system(str_c("zcat < ", shQuote(str_c(mimic_path, "/hosp/labevents.csv.gz")), 
-             " | head"), intern = TRUE)
-```
-
-```{r read in labevents, eval=FALSE}
-if  (!file.exists("labevents_icustays.csv.gz")) {
-  labevents_data <-
-    fread(str_c(mimic_path, "/hosp/labevents.csv.gz"),
-          select = c("subject_id", "hadm_id", "itemid", "charttime", "valuenum"), nThread = 4)
-  labevents_data %>% 
-    semi_join(icustays_data, by = c("subject_id", "hadm_id")) %>% 
-    fwrite("labevents_icustays.csv.gz", nThread = 4)
-}
-lab_events_data <- read_csv("labevents_icustays.csv.gz")
-head(lab_events_data)
-```
-
-```{r filter for lab items of interest, eval=FALSE}
-labs_of_interest <- 
-  c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 50960, 50893, 50813)
-lab_events_data <- lab_events_data %>% 
-  filter(itemid %in% labs_of_interest)
-
-lab_events_data %>% head()
-
-#lab_events_data %>% fwrite("labevents_icustays_selected.csv.gz")
-```
-
 
 ## Q7. Vitals from chartered events
 
@@ -409,52 +390,30 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 
 `d_items.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/d_items/>) is the dictionary for the `ITEMID` in `CHARTEVENTS.csv`. Find potential values of `ITEMID` that correspond to systolic blood pressure, i.e., `LABEL` contains the string `systolic`. 
 
-**Solution**: Read in the filtered lab events file generated using linux commands. 
+**Solution**: Read in the filtered chart events file generated using linux commands. 
 
 ```{r}
 chartevents_data <- fread(
-  str_c(mimic_path,
-        "/mimic-iv-derived-data/chartevents_filtered_itemid.csv.gz"))
+  str_c(mimic_path, 
+        "/mimic-iv-derived-data/chartevents_filtered_itemid.csv.gz"), 
+  header = FALSE, 
+  col.names = c("subject_id", "hadm_id", "stay_id", "charttime", 
+                "itemid", "valuenum"),
+  nThread = 4) %>% 
+  as_tibble() %>% 
+  mutate_at(c("subject_id", "hadm_id", "stay_id", "itemid"), as.numeric) %>% 
+  mutate(charttime = ymd_hms(charttime))
 ```
+This dataset only includes the following chart events of interest: 
 
---------
-
-First read in the `d_items.csv.gz` and `chartevents.csv.gz` data.
-
-220045  Heart Rate
-223761	Temperature Fahrenheit
-223762	Temperature Celsius
-229862	Forehead SpO2 Sensor in Place
-226253	SpO2 Desat Limit
-```{r read in d_items, eval=FALSE}
-d_items_data <- read_csv(str_c(mimic_path, '/icu/d_items.csv.gz'))
-head(d_items_data)
-d_items_data %>% 
-  filter(str_detect(label, regex("blood pressure", ignore_case = T))) %>% 
-  filter(str_detect(label, regex("systolic", ignore_case = T))) %>% 
-  print(width = Inf)
-d_items_data %>% 
-  filter(str_detect(label, regex("SpO2", ignore_case = T))) %>% 
-  print(width = Inf)
-d_items_data %>% 
-  filter(str_detect(label, regex("respiratory", ignore_case = T))) %>% 
-  print(width = Inf)
-```
-
-```{r, eval=FALSE}
-system(str_c("zcat < ", shQuote(str_c(mimic_path, "/icu/chartevents.csv.gz")), 
-             " | head"), intern = TRUE)
-```
-
-```{r read in chartevents, eval=FALSE}
-if  (!file.exists("chartevents_icustays.csv.gz")) {
-  chartevents_data <-
-    fread(str_c(mimic_path, "/icu/chartevents.csv.gz"),
-          select = c("subject_id", "hadm_id", "itemid", "charttime", "valuenum"), nThread = 4)
-  chartevents_data %>% 
-    semi_join(icustays_data, by = c("subject_id", "hadm_id")) %>% 
-    fwrite("chartevents_icustays.csv.gz", nThread = 4)
-}
+c(220045, 220050, 220179, 220181, 220210, 223761, 220277, 229862))
+```{r}
+d_chartitems <- fread(str_c(mimic_path, "/mimic-iv/icu/d_items.csv.gz"))
+vitalitems_label <- d_chartitems %>% 
+  filter(itemid %in% 
+           c(220045, 220050, 220179, 220181, 220210, 223761)) %>% 
+  select(itemid, label) %>% 
+  print()
 ```
 
 ## Q8. Putting things together
@@ -473,19 +432,86 @@ and columns contains at least following variables
 - first vitals measurement during ICU stay  
 - an indicator variable whether the patient died within 30 days of hospital admission  
 
-```{r eval=FALSE}
-icustays_data %>% 
+```{r unique icustays}
+icustays_uniq_data <- icustays_data %>% 
   # take first ICU stay of each unique patient
   group_by(subject_id) %>% 
   slice_min(intime) %>% 
+  ungroup() %>% 
   # merge admissions data
   left_join(adm_data, by = c("subject_id", "hadm_id")) %>% 
   # merge patients data
   left_join(patients_data, by = "subject_id") %>% 
   #only keep age at admission > 18
   mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %>% 
-  filter(age_at_adm > 18)
+  filter(age_at_adm > 18) %>% 
+  print(width = Inf)
+```
 
-  
-  
+```{r merge with lab events}
+icu_uniq_lab_data <- labevents_data %>% 
+  # keep only subject_id's and hadm_id's that are in icustays_uniq_data
+  semi_join(icustays_uniq_data, by = c("subject_id", "hadm_id")) %>% 
+  # merge intime from icustays_uniq_data
+  left_join(select(icustays_uniq_data, subject_id, hadm_id, intime),
+            by = c("subject_id", "hadm_id")) %>%
+  # keep only items with charttime later than icu intime
+  filter(charttime >= intime) %>% 
+  # pick the first measurement of each lab for each patient
+  group_by(subject_id, itemid) %>% 
+  arrange(charttime, .by_group = TRUE) %>% 
+  slice_head(n = 1) %>% 
+  # remove charttime and intime from tibble
+  select(-charttime, -intime) %>% 
+  # convert from long to wide form for lab measurement
+  spread(key = itemid, value = valuenum) %>% 
+  # merge with icustays_uniq_data 
+  right_join(icustays_uniq_data, by = c("subject_id", "hadm_id")) %>% 
+  # rename lab measurements with lab labels
+  rename_at(vars(as.character(labitems_label$itemid)), ~labitems_label$label) %>% 
+  print(width = Inf) 
+```
+
+```{r merge chart events}
+icu_uniq_final_data <- chartevents_data %>% 
+  # keep only subject_id's and hadm_id's that are in icustays_uniq_data
+  semi_join(icustays_uniq_data, by = c("subject_id", "hadm_id")) %>% 
+  # merge intime from icustays_uniq_data
+  left_join(select(icustays_uniq_data, subject_id, hadm_id, intime), 
+            by = c("subject_id", "hadm_id")) %>% 
+  # keep only items with charttime later than icu intime
+  filter(charttime >= intime) %>% 
+  # pick the first measurement of each vital tyoe for each patient
+  group_by(subject_id, itemid) %>% 
+  arrange(charttime, .by_group = TRUE) %>% 
+  slice_head(n = 1) %>%
+  # remove charttime and intime from tibble
+  select(-charttime, -intime) %>% 
+  # convert from long to wide form for vital measurement
+  spread(key = itemid, value = valuenum) %>% 
+  # merge with icu_uniq_lab_data
+  right_join(icu_uniq_lab_data, by = c("subject_id", "hadm_id")) %>% 
+  # rename vital measurements with vital labels
+  rename_at(vars(as.character(vitalitems_label$itemid)), 
+            ~vitalitems_label$label) %>% 
+  print(width = Inf)
+```
+
+```{r add indicator for death within 30 days of admissione, eval=FALSE}
+# there are 7 subjects who died in hospital without deathtime
+icu_uniq_final_data %>% 
+  filter(is.na(deathtime) & hospital_expire_flag == 1) %>% 
+  select(admittime, dischtime, deathtime, hospital_expire_flag) %>% 
+  mutate(death_within_30days = 
+           difftime(dischtime, admittime, units = "days") <= 30) %>% 
+  print()
+
+head(icu_uniq_final_data)
+
+icu_uniq_final_data %>% 
+  filter(hospital_expire_flag == 1) %>% 
+  select(admittime, dischtime, deathtime, hospital_expire_flag) %>% 
+  filter(dischtime < deathtime) %>% 
+  print()
+
 ```
