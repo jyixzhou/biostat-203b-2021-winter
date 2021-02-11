@@ -51,7 +51,7 @@ There are quite a few utilities in R for reading data files. Let us test the spe
 In this homework, we stick to the tidyverse. 
 
 **Solution**: Of the three methods, `read.csv` from base R is the slowest and `fread` from the data.table package is the fastest. 
-```{r}
+```{r speed}
 #system.time(read.csv(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz')))
 #the above line is commented out to shorten the knitting time
 system.time(read_csv(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz')))
@@ -70,25 +70,25 @@ system.time(fread(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz')))
 
 **Solution**:
 First, read in the `icustays.csv.gz` data. 
-```{r}
+```{r read icu stays}
 icustays_data <- read_csv(str_c(mimic_path, '/mimic-iv/icu/icustays.csv.gz'))
 ```
 - There are 69619 unique `stay_id`.
-```{r}
+```{r unique stays}
 icustays_data %>% 
   distinct(stay_id) %>% 
   nrow()
 ```
 
 - There are 50048 unique `subject_id`. 
-```{r}
+```{r unique subjects}
 icustays_data %>% 
   distinct(subject_id) %>% 
   nrow()
 ```
 
 - The distribution of the length of ICU stay, `los`, is skewed to the right. There are outliers with extremely large values. The mean is 3.9805 and the median is 2.0611. 
-```{r}
+```{r los}
 summary(icustays_data$los)
 
 ggplot(icustays_data, aes(los)) +
@@ -105,7 +105,7 @@ icustays_data %>%
 ```
 
 - first ICU unit: the first care unit with the least ICU stays is the Medicine unit, and the first care unit with the most ICU stays is the Medical Intensive Care Unit.  
-```{r}
+```{r first icu unit}
 ggplot(icustays_data, 
        aes(x=reorder(first_careunit, first_careunit, function(x)-length(x)))) +
   geom_bar(aes(fill = first_careunit)) + 
@@ -115,7 +115,7 @@ ggplot(icustays_data,
 ```
 
 - last ICU unit:the last care unit with the least ICU stays is the Neuro Surgical Intensive Care Unit, and the last care unit with the most ICU stays is the Medical Intensive Care Unit.  
-```{r}
+```{r last icu unit}
 ggplot(icustays_data, 
        aes(x=reorder(last_careunit, last_careunit, function(x)-length(x)))) +
   geom_bar(aes(fill = last_careunit)) + 
@@ -148,7 +148,7 @@ Note it is possible that one patient (uniquely identified by the `SUBJECT_ID`) i
 
 **Solution**:
 First, read in the `admissions.csv.gz` data. 
-```{r}
+```{r read admissions}
 adm_data <- read_csv(str_c(mimic_path, '/mimic-iv/core/admissions.csv.gz'))
 ```
 *The following information about details of each admission is summarized using the entire admissions dataset.*
@@ -324,7 +324,7 @@ Explore `patients.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/core/patients
 
 **Solution**:
 First, read in the `patients.csv.gz` data. 
-```{r}
+```{r read patients}
 patients_data <- read_csv(str_c(mimic_path, '/mimic-iv/core/patients.csv.gz'))
 ```
 
@@ -360,7 +360,7 @@ We are interested in the lab measurements of creatinine (50912), potassium (5097
 
 **Solution**: Read in the filtered lab events file generated using linux commands. 
 
-```{r}
+```{r read labevents}
 labevents_data <- fread(
   str_c(mimic_path, "/mimic-iv-derived-data/labevents_filtered_itemid.csv.gz"),
   header = FALSE,
@@ -371,9 +371,9 @@ labevents_data <- fread(
   mutate(charttime = ymd_hms(charttime))
 ```
 
-This dataset only includes the following lab events of interest: 
+This dataset only includes the following lab events of interest, which will be used to rename lab measurements in the final dataset in Q8. 
 
-```{r}
+```{r display lab items}
 d_labitems <- fread(str_c(mimic_path, "/mimic-iv/hosp/d_labitems.csv.gz"))
 labitems_label <- d_labitems %>% 
   filter(itemid %in% c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 
@@ -392,7 +392,7 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 
 **Solution**: Read in the filtered chart events file generated using linux commands. 
 
-```{r}
+```{r read chartevents}
 chartevents_data <- fread(
   str_c(mimic_path, 
         "/mimic-iv-derived-data/chartevents_filtered_itemid.csv.gz"), 
@@ -404,16 +404,21 @@ chartevents_data <- fread(
   mutate_at(c("subject_id", "hadm_id", "stay_id", "itemid"), as.numeric) %>% 
   mutate(charttime = ymd_hms(charttime))
 ```
-This dataset only includes the following chart events of interest: 
+This dataset only includes the following chart events of interest. Note that although Item 229826 (Forhead SpO2 sensor in place) is filtered for in the chart events, there are no subjects in the final dataset (Q8) with this measurement data. Therefore, this item is not included when renaming the final dataset. 
 
 c(220045, 220050, 220179, 220181, 220210, 223761, 220277, 229862))
-```{r}
+```{r display chart items}
 d_chartitems <- fread(str_c(mimic_path, "/mimic-iv/icu/d_items.csv.gz"))
-vitalitems_label <- d_chartitems %>% 
+d_chartitems %>% 
   filter(itemid %in% 
-           c(220045, 220050, 220179, 220181, 220210, 223761)) %>% 
+           c(220045, 220050, 220179, 220181, 220210, 223761, 229862)) %>% 
   select(itemid, label) %>% 
   print()
+
+vitalitems_label  <- d_chartitems %>%  
+  filter(itemid %in% 
+           c(220045, 220050, 220179, 220181, 220210, 223761)) %>% 
+  select(itemid, label)
 ```
 
 ## Q8. Putting things together
@@ -444,8 +449,7 @@ icustays_uniq_data <- icustays_data %>%
   left_join(patients_data, by = "subject_id") %>% 
   #only keep age at admission > 18
   mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %>% 
-  filter(age_at_adm > 18) %>% 
-  print(width = Inf)
+  filter(age_at_adm > 18)
 ```
 
 ```{r merge with lab events}
@@ -468,8 +472,7 @@ icu_uniq_lab_data <- labevents_data %>%
   # merge with icustays_uniq_data 
   right_join(icustays_uniq_data, by = c("subject_id", "hadm_id")) %>% 
   # rename lab measurements with lab labels
-  rename_at(vars(as.character(labitems_label$itemid)), ~labitems_label$label) %>% 
-  print(width = Inf) 
+  rename_at(vars(as.character(labitems_label$itemid)), ~labitems_label$label)
 ```
 
 ```{r merge chart events}
@@ -493,25 +496,21 @@ icu_uniq_final_data <- chartevents_data %>%
   right_join(icu_uniq_lab_data, by = c("subject_id", "hadm_id")) %>% 
   # rename vital measurements with vital labels
   rename_at(vars(as.character(vitalitems_label$itemid)), 
-            ~vitalitems_label$label) %>% 
-  print(width = Inf)
+            ~vitalitems_label$label)
 ```
 
-```{r add indicator for death within 30 days of admissione, eval=FALSE}
-# there are 7 subjects who died in hospital without deathtime
-icu_uniq_final_data %>% 
-  filter(is.na(deathtime) & hospital_expire_flag == 1) %>% 
-  select(admittime, dischtime, deathtime, hospital_expire_flag) %>% 
+```{r indicator for death within 30 days of admission}
+icu_uniq_final_data <- icu_uniq_final_data %>% 
+  # add indicator for death within 30 days of admission
   mutate(death_within_30days = 
-           difftime(dischtime, admittime, units = "days") <= 30) %>% 
-  print()
-
-head(icu_uniq_final_data)
-
-icu_uniq_final_data %>% 
-  filter(hospital_expire_flag == 1) %>% 
-  select(admittime, dischtime, deathtime, hospital_expire_flag) %>% 
-  filter(dischtime < deathtime) %>% 
-  print()
-
+           case_when(
+             # for flag = 1, calculate diff between death and admit time
+             hospital_expire_flag == 1 & !is.na(deathtime) ~ 
+               difftime(deathtime, admittime, units = "days") <= 30, 
+             # for flag = 1, use discharge time when death time is NA
+             hospital_expire_flag == 1 & is.na(deathtime) ~ 
+               difftime(dischtime, admittime, units = "days") <= 30,
+             # for flag = 0, did not die in hospital
+             hospital_expire_flag  == 0 ~ FALSE)) %>% 
+  print(width = Inf)
 ```
