@@ -406,7 +406,6 @@ chartevents_data <- fread(
 ```
 This dataset only includes the following chart events of interest. Note that although Item 229826 (Forhead SpO2 sensor in place) is filtered for in the chart events, there are no subjects in the final dataset (Q8) with this measurement data. Therefore, this item is not included when renaming the final dataset. 
 
-c(220045, 220050, 220179, 220181, 220210, 223761, 220277, 229862))
 ```{r display chart items}
 d_chartitems <- fread(str_c(mimic_path, "/mimic-iv/icu/d_items.csv.gz"))
 d_chartitems %>% 
