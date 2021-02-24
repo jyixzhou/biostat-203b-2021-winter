@@ -133,23 +133,29 @@ if (!dir.exists("mimiciv_shiny")) {
 ```{r eval=F}
 icustays_tble %>% 
   group_by(subject_id) %>% 
-  slice_min(intime) %>% 
+  filter(rank(intime) == 1) %>% 
   ungroup() %>% 
   left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>% 
   left_join(patients_tble, by = "subject_id") %>% 
   mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %>% 
   filter(age_at_adm > 18) %>% 
   left_join(labevents_tble, by = c("subject_id", "hadm_id")) %>% 
-  left_join(chartevents_tble, by = c("subject_id", "hadm_id")) %>% 
+  left_join(chartevents_tble, by = c("subject_id", "hadm_id", "stay_id")) %>% 
   show_query() %>% 
   collect() %>% 
+  mutate(death_within_30days = 
+           case_when(
+             # for flag = 1, calculate diff between death and admit time
+             hospital_expire_flag == 1 & !is.na(deathtime) ~ 
+               difftime(deathtime, admittime, units = "days") <= 30, 
+             # for flag = 1, use discharge time when death time is NA
+             hospital_expire_flag == 1 & is.na(deathtime) ~ 
+               difftime(dischtime, admittime, units = "days") <= 30,
+             # for flag = 0, did not die in hospital
+             hospital_expire_flag  == 0 ~ FALSE)) %>% 
+  print(width = Inf) %>% 
   saveRDS(file = "~/biostat-203b-2021-winter/hw3/mimiciv_shiny/icu_cohort.rds")
-  # mutate(total_los <- difftime(deathtime, admittime, units = "days")) %>% 
-  # mutate(death_within_30days = ifelse(hospital_expire_flag == 1,
-  #   as.numeric(deathtime - admittime) <= 30, FALSE)) %>% 
-  # print(width = Inf)
 
-saveRDS(subset, file = "~/biostat-203b-2021-winter/hw3/mimiciv_shiny/icu_cohort.rds")
 ```
 
 
