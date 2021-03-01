@@ -671,23 +671,157 @@ dbname &lt;- &#39;mimiciv&#39;
 <ol start="4" style="list-style-type: decimal">
 <li>Connect to the patients table.</li>
 </ol>
-<pre class="r"><code># TODO
-# patients_tble &lt;-</code></pre>
+<pre class="r"><code>patients_tble &lt;- tbl(con, Id(schema = &quot;mimic_core&quot;, table = &quot;patients&quot;)) %&gt;%
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   table&lt;&quot;mimic_core&quot;.&quot;patients&quot;&gt; [?? x 6]
+## # Database: postgres 10.0.16 [postgres@/var/run/postgresql:5432/mimiciv]
+##    subject_id gender anchor_age anchor_year anchor_year_group dod       
+##         &lt;int&gt; &lt;chr&gt;       &lt;int&gt;       &lt;int&gt; &lt;chr&gt;             &lt;date&gt;    
+##  1   10002723 F               0        2128 2017 - 2019       NA        
+##  2   10003939 M               0        2184 2008 - 2010       NA        
+##  3   10004222 M               0        2161 2014 - 2016       NA        
+##  4   10005325 F               0        2154 2011 - 2013       NA        
+##  5   10007338 F               0        2153 2017 - 2019       NA        
+##  6   10008101 M               0        2142 2008 - 2010       NA        
+##  7   10009872 F               0        2168 2014 - 2016       NA        
+##  8   10011333 F               0        2132 2014 - 2016       NA        
+##  9   10011879 M               0        2158 2014 - 2016       NA        
+## 10   10012663 F               0        2171 2011 - 2013       NA        
+## # … with more rows</code></pre>
 <ol start="5" style="list-style-type: decimal">
 <li>Connect to the admissions table.</li>
 </ol>
-<pre class="r"><code># TODO
-# admissions_tble &lt;- </code></pre>
+<pre class="r"><code>admissions_tble &lt;- tbl(con, Id(schema = &quot;mimic_core&quot;, 
+                               table = &quot;admissions&quot;)) %&gt;%
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   table&lt;&quot;mimic_core&quot;.&quot;admissions&quot;&gt; [?? x 15]
+## # Database: postgres 10.0.16 [postgres@/var/run/postgresql:5432/mimiciv]
+##    subject_id  hadm_id admittime           dischtime          
+##         &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;              &lt;dttm&gt;             
+##  1   12427812 21593330 2184-01-06 11:51:00 2184-01-10 11:45:00
+##  2   14029832 22059088 2120-01-18 01:28:00 2120-01-20 16:13:00
+##  3   14495017 22484010 2175-01-28 15:41:00 2175-01-29 16:00:00
+##  4   13676048 23865469 2193-01-19 05:27:00 2193-01-24 18:59:00
+##  5   13831972 27763544 2131-01-27 04:03:00 2131-01-27 05:39:00
+##  6   18523038 25414328 2142-08-26 17:14:00 2142-08-27 10:00:00
+##  7   16705931 20580522 2174-10-24 11:30:00 2174-10-24 18:45:00
+##  8   19963742 24951506 2171-07-04 15:58:00 2171-07-05 13:37:00
+##  9   10903424 22568585 2181-01-31 13:09:00 2181-01-31 13:42:00
+## 10   15030422 21975876 2149-09-21 23:54:00 2149-09-22 03:59:00
+##    deathtime           admission_type         admission_location    
+##    &lt;dttm&gt;              &lt;chr&gt;                  &lt;chr&gt;                 
+##  1 NA                  URGENT                 PHYSICIAN REFERRAL    
+##  2 NA                  URGENT                 TRANSFER FROM HOSPITAL
+##  3 NA                  DIRECT EMER.           PHYSICIAN REFERRAL    
+##  4 NA                  URGENT                 PHYSICIAN REFERRAL    
+##  5 NA                  EU OBSERVATION         EMERGENCY ROOM        
+##  6 NA                  DIRECT OBSERVATION     PROCEDURE SITE        
+##  7 NA                  DIRECT OBSERVATION     PHYSICIAN REFERRAL    
+##  8 NA                  AMBULATORY OBSERVATION PACU                  
+##  9 NA                  EU OBSERVATION         EMERGENCY ROOM        
+## 10 NA                  EU OBSERVATION         EMERGENCY ROOM        
+##    discharge_location insurance language marital_status ethnicity
+##    &lt;chr&gt;              &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;    
+##  1 HOME               Other     ENGLISH  &lt;NA&gt;           UNKNOWN  
+##  2 HOME               Other     ENGLISH  &lt;NA&gt;           OTHER    
+##  3 HOME               Other     ?        &lt;NA&gt;           WHITE    
+##  4 HOME               Other     ?        MARRIED        WHITE    
+##  5 &lt;NA&gt;               Medicaid  ENGLISH  SINGLE         WHITE    
+##  6 &lt;NA&gt;               Other     ENGLISH  SINGLE         WHITE    
+##  7 &lt;NA&gt;               Other     ENGLISH  MARRIED        WHITE    
+##  8 &lt;NA&gt;               Other     ENGLISH  SINGLE         UNKNOWN  
+##  9 &lt;NA&gt;               Other     ENGLISH  SINGLE         WHITE    
+## 10 &lt;NA&gt;               Other     ENGLISH  SINGLE         WHITE    
+##    edregtime           edouttime           hospital_expire_flag
+##    &lt;dttm&gt;              &lt;dttm&gt;                             &lt;int&gt;
+##  1 NA                  NA                                     0
+##  2 NA                  NA                                     0
+##  3 NA                  NA                                     0
+##  4 NA                  NA                                     0
+##  5 2131-01-26 22:19:00 2131-01-27 05:39:00                    0
+##  6 NA                  NA                                     0
+##  7 NA                  NA                                     0
+##  8 NA                  NA                                     0
+##  9 NA                  NA                                     0
+## 10 NA                  NA                                     0
+## # … with more rows</code></pre>
 <ol start="6" style="list-style-type: decimal">
 <li>Connect to the <code>mimic_labevents_icu</code> table.</li>
 </ol>
-<pre class="r"><code># TODO
-# labevents_tble &lt;-</code></pre>
+<pre class="r"><code>labevents_tble &lt;- tbl(con, Id(schema = &quot;public&quot;, 
+                              table = &quot;mimic_labevents_icu&quot;)) %&gt;%
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   table&lt;&quot;public&quot;.&quot;mimic_labevents_icu&quot;&gt; [?? x 13]
+## # Database: postgres 10.0.16 [postgres@/var/run/postgresql:5432/mimiciv]
+##    subject_id  hadm_id bicarbonate calcium chloride creatinine glucose magnesium
+##         &lt;int&gt;    &lt;int&gt;       &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;
+##  1   10000032 29079034          21     9.3      102        0.5     115       2.3
+##  2   10000980 26913865          23     9.2      103        2.2     144       2  
+##  3   10001217 24597018          23     8.2      104        0.4     113       1.9
+##  4   10001725 25563031          24     9.1      106        0.8     146       1.5
+##  5   10001884 26184834          33     9.8       96        1.1     148       2.2
+##  6   10002013 23581541          23    NA        109        1.1      98       2.1
+##  7   10002155 20345487          NA    NA         NA       NA        NA      NA  
+##  8   10002155 23822395          25     8.8      106        0.9      95       2  
+##  9   10002223 22494570          26     8.7      102        0.8      88       2  
+## 10   10002428 28662225          20     7.4       98        0.8      99       1.4
+##    potassium sodium hematocrit   wbc lactate
+##        &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+##  1       4.7    132       34.8   4.1    NA  
+##  2       4.2    139       30.8   5.4    NA  
+##  3       3.6    138       33.6  19      NA  
+##  4       3.9    140       39.1  17      NA  
+##  5       4      136       36    18.4     1.5
+##  6       4      140       28.6  18.2     3.3
+##  7      NA       NA       NA    NA       7.7
+##  8       4.5    139       37.9   5.5    NA  
+##  9       3.9    138       32.5  10.1    NA  
+## 10       3.9    129       28.7  22.4     1.6
+## # … with more rows</code></pre>
 <ol start="7" style="list-style-type: decimal">
 <li>Connect to <code>mimic_chartevents_icu</code> table.</li>
 </ol>
-<pre class="r"><code># TODO
-# chartevents_tble &lt;- </code></pre>
+<pre class="r"><code>chartevents_tble &lt;- tbl(con, Id(schema = &quot;public&quot;, table = &quot;mimic_chartevents_icu&quot;)) %&gt;%
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   table&lt;&quot;public&quot;.&quot;mimic_chartevents_icu&quot;&gt; [?? x 10]
+## # Database: postgres 10.0.16 [postgres@/var/run/postgresql:5432/mimiciv]
+##    subject_id  hadm_id  stay_id heart_rate non_invasive_blood_pressure_systolic
+##         &lt;int&gt;    &lt;int&gt;    &lt;int&gt;      &lt;dbl&gt;                                &lt;dbl&gt;
+##  1   10000032 29079034 37529680         91                                   84
+##  2   10000980 26913865 36742749         77                                  150
+##  3   10001217 24597018 30327812         86                                  151
+##  4   10001725 25563031 37542711         55                                   73
+##  5   10001884 26184834 31832304         38                                  180
+##  6   10002013 23581541 37106138         80                                  104
+##  7   10002155 23822395 34599502         68                                  126
+##  8   10002223 22494570 39908879        100                                  123
+##  9   10002428 28662225 31956612        124                                   87
+## 10   10002428 28662225 39157783         NA                                   NA
+##    non_invasive_blood_pressure_mean respiratory_rate temperature_fahrenheit
+##                               &lt;dbl&gt;            &lt;dbl&gt;                  &lt;dbl&gt;
+##  1                               56               24                   98.7
+##  2                               92               23                   98  
+##  3                              104               18                   98.5
+##  4                               59               19                   97.7
+##  5                               46               10                   98.1
+##  6                               77               14                   97.2
+##  7                               78               18                   95.9
+##  8                               80               29                   98.6
+##  9                               53               25                  103. 
+## 10                               NA               NA                   NA  
+##    arterial_blood_pressure_systolic arterial_blood_pressure_mean
+##                               &lt;dbl&gt;                        &lt;dbl&gt;
+##  1                               NA                           NA
+##  2                               NA                           NA
+##  3                               NA                           NA
+##  4                               NA                           NA
+##  5                               NA                           NA
+##  6                              134                           94
+##  7                              115                           82
+##  8                               NA                           NA
+##  9                               NA                           NA
+## 10                              102                           69
+## # … with more rows</code></pre>
 <ol start="8" style="list-style-type: decimal">
 <li>Put things together. Using one chain of pipes <code>%&gt;%</code> to perform following data wrangling steps: (i) keep only the first ICU stay of each unique patient, (ii) merge in admissions and patients tables, (iii) keep adults only (age at admission &gt;= 18), (iv) merge in the labevents and chartevents tables, (v) display the SQL query, (vi) collect SQL query result into memory as a tibble, (vii) create an indicator for 30-day mortality, (viii) save the final tibble to an <code>icu_cohort.rds</code> R data file in the <code>mimiciv_shiny</code> folder.</li>
 </ol>
@@ -695,8 +829,211 @@ dbname &lt;- &#39;mimiciv&#39;
 if (!dir.exists(&quot;mimiciv_shiny&quot;)) {
   dir.create(&quot;mimiciv_shiny&quot;)
 }</code></pre>
-<pre class="r"><code># TODO
-# icustays_tble %&gt;%</code></pre>
+<pre class="r"><code>icustays_tble %&gt;% 
+  # take first ICU stay of each unique patient
+  group_by(subject_id) %&gt;% 
+  filter(rank(intime) == 1) %&gt;% 
+  ungroup() %&gt;% 
+  # merge admissions
+  left_join(admissions_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;)) %&gt;% 
+  # merge patients
+  left_join(patients_tble, by = &quot;subject_id&quot;) %&gt;% 
+  # filter for adult patients
+  mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %&gt;% 
+  filter(age_at_adm &gt; 18) %&gt;% 
+  # merge lab events
+  left_join(labevents_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;)) %&gt;% 
+  # merge chart events
+  left_join(chartevents_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;stay_id&quot;)) %&gt;% 
+  # display query results
+  show_query() %&gt;% 
+  # collect query result
+  collect() %&gt;% 
+  # add indicator for death within 30 days of admission
+  mutate(death_within_30days = 
+           case_when(
+             # for flag = 1, calculate diff between death and admit time
+             hospital_expire_flag == 1 &amp; !is.na(deathtime) ~ 
+               difftime(deathtime, admittime, units = &quot;days&quot;) &lt;= 30, 
+             # for flag = 1, use discharge time when death time is NA
+             hospital_expire_flag == 1 &amp; is.na(deathtime) ~ 
+               difftime(dischtime, admittime, units = &quot;days&quot;) &lt;= 30,
+             # for flag = 0, did not die in hospital
+             hospital_expire_flag  == 0 ~ FALSE)) %&gt;% 
+  # not run when knitted
+  # saveRDS(file = 
+  #           &quot;~/biostat-203b-2021-winter/hw3/mimiciv_shiny/icu_cohort.rds&quot;) %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT &quot;LHS&quot;.&quot;subject_id&quot; AS &quot;subject_id&quot;, &quot;LHS&quot;.&quot;hadm_id&quot; AS &quot;hadm_id&quot;, &quot;LHS&quot;.&quot;stay_id&quot; AS &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;, &quot;admittime&quot;, &quot;dischtime&quot;, &quot;deathtime&quot;, &quot;admission_type&quot;, &quot;admission_location&quot;, &quot;discharge_location&quot;, &quot;insurance&quot;, &quot;language&quot;, &quot;marital_status&quot;, &quot;ethnicity&quot;, &quot;edregtime&quot;, &quot;edouttime&quot;, &quot;hospital_expire_flag&quot;, &quot;gender&quot;, &quot;anchor_age&quot;, &quot;anchor_year&quot;, &quot;anchor_year_group&quot;, &quot;dod&quot;, &quot;age_at_adm&quot;, &quot;bicarbonate&quot;, &quot;calcium&quot;, &quot;chloride&quot;, &quot;creatinine&quot;, &quot;glucose&quot;, &quot;magnesium&quot;, &quot;potassium&quot;, &quot;sodium&quot;, &quot;hematocrit&quot;, &quot;wbc&quot;, &quot;lactate&quot;, &quot;heart_rate&quot;, &quot;non_invasive_blood_pressure_systolic&quot;, &quot;non_invasive_blood_pressure_mean&quot;, &quot;respiratory_rate&quot;, &quot;temperature_fahrenheit&quot;, &quot;arterial_blood_pressure_systolic&quot;, &quot;arterial_blood_pressure_mean&quot;
+## FROM (SELECT &quot;LHS&quot;.&quot;subject_id&quot; AS &quot;subject_id&quot;, &quot;LHS&quot;.&quot;hadm_id&quot; AS &quot;hadm_id&quot;, &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;, &quot;admittime&quot;, &quot;dischtime&quot;, &quot;deathtime&quot;, &quot;admission_type&quot;, &quot;admission_location&quot;, &quot;discharge_location&quot;, &quot;insurance&quot;, &quot;language&quot;, &quot;marital_status&quot;, &quot;ethnicity&quot;, &quot;edregtime&quot;, &quot;edouttime&quot;, &quot;hospital_expire_flag&quot;, &quot;gender&quot;, &quot;anchor_age&quot;, &quot;anchor_year&quot;, &quot;anchor_year_group&quot;, &quot;dod&quot;, &quot;age_at_adm&quot;, &quot;bicarbonate&quot;, &quot;calcium&quot;, &quot;chloride&quot;, &quot;creatinine&quot;, &quot;glucose&quot;, &quot;magnesium&quot;, &quot;potassium&quot;, &quot;sodium&quot;, &quot;hematocrit&quot;, &quot;wbc&quot;, &quot;lactate&quot;
+## FROM (SELECT *
+## FROM (SELECT &quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;, &quot;admittime&quot;, &quot;dischtime&quot;, &quot;deathtime&quot;, &quot;admission_type&quot;, &quot;admission_location&quot;, &quot;discharge_location&quot;, &quot;insurance&quot;, &quot;language&quot;, &quot;marital_status&quot;, &quot;ethnicity&quot;, &quot;edregtime&quot;, &quot;edouttime&quot;, &quot;hospital_expire_flag&quot;, &quot;gender&quot;, &quot;anchor_age&quot;, &quot;anchor_year&quot;, &quot;anchor_year_group&quot;, &quot;dod&quot;, EXTRACT(year FROM &quot;admittime&quot;) - &quot;anchor_year&quot; + &quot;anchor_age&quot; AS &quot;age_at_adm&quot;
+## FROM (SELECT &quot;LHS&quot;.&quot;subject_id&quot; AS &quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;, &quot;admittime&quot;, &quot;dischtime&quot;, &quot;deathtime&quot;, &quot;admission_type&quot;, &quot;admission_location&quot;, &quot;discharge_location&quot;, &quot;insurance&quot;, &quot;language&quot;, &quot;marital_status&quot;, &quot;ethnicity&quot;, &quot;edregtime&quot;, &quot;edouttime&quot;, &quot;hospital_expire_flag&quot;, &quot;gender&quot;, &quot;anchor_age&quot;, &quot;anchor_year&quot;, &quot;anchor_year_group&quot;, &quot;dod&quot;
+## FROM (SELECT &quot;LHS&quot;.&quot;subject_id&quot; AS &quot;subject_id&quot;, &quot;LHS&quot;.&quot;hadm_id&quot; AS &quot;hadm_id&quot;, &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;, &quot;admittime&quot;, &quot;dischtime&quot;, &quot;deathtime&quot;, &quot;admission_type&quot;, &quot;admission_location&quot;, &quot;discharge_location&quot;, &quot;insurance&quot;, &quot;language&quot;, &quot;marital_status&quot;, &quot;ethnicity&quot;, &quot;edregtime&quot;, &quot;edouttime&quot;, &quot;hospital_expire_flag&quot;
+## FROM (SELECT &quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;
+## FROM (SELECT &quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;stay_id&quot;, &quot;first_careunit&quot;, &quot;last_careunit&quot;, &quot;intime&quot;, &quot;outtime&quot;, &quot;los&quot;, RANK() OVER (PARTITION BY &quot;subject_id&quot; ORDER BY &quot;intime&quot;) AS &quot;q01&quot;
+## FROM &quot;mimic_icu&quot;.&quot;icustays&quot;) &quot;q01&quot;
+## WHERE (&quot;q01&quot; = 1.0)) &quot;LHS&quot;
+## LEFT JOIN &quot;mimic_core&quot;.&quot;admissions&quot; AS &quot;RHS&quot;
+## ON (&quot;LHS&quot;.&quot;subject_id&quot; = &quot;RHS&quot;.&quot;subject_id&quot; AND &quot;LHS&quot;.&quot;hadm_id&quot; = &quot;RHS&quot;.&quot;hadm_id&quot;)
+## ) &quot;LHS&quot;
+## LEFT JOIN &quot;mimic_core&quot;.&quot;patients&quot; AS &quot;RHS&quot;
+## ON (&quot;LHS&quot;.&quot;subject_id&quot; = &quot;RHS&quot;.&quot;subject_id&quot;)
+## ) &quot;q01&quot;) &quot;q02&quot;
+## WHERE (&quot;age_at_adm&quot; &gt; 18.0)) &quot;LHS&quot;
+## LEFT JOIN &quot;public&quot;.&quot;mimic_labevents_icu&quot; AS &quot;RHS&quot;
+## ON (&quot;LHS&quot;.&quot;subject_id&quot; = &quot;RHS&quot;.&quot;subject_id&quot; AND &quot;LHS&quot;.&quot;hadm_id&quot; = &quot;RHS&quot;.&quot;hadm_id&quot;)
+## ) &quot;LHS&quot;
+## LEFT JOIN &quot;public&quot;.&quot;mimic_chartevents_icu&quot; AS &quot;RHS&quot;
+## ON (&quot;LHS&quot;.&quot;subject_id&quot; = &quot;RHS&quot;.&quot;subject_id&quot; AND &quot;LHS&quot;.&quot;hadm_id&quot; = &quot;RHS&quot;.&quot;hadm_id&quot; AND &quot;LHS&quot;.&quot;stay_id&quot; = &quot;RHS&quot;.&quot;stay_id&quot;)
+## 
+## # A tibble: 49,971 x 46
+##    subject_id  hadm_id  stay_id first_careunit                                  
+##         &lt;int&gt;    &lt;int&gt;    &lt;int&gt; &lt;chr&gt;                                           
+##  1   10000980 26913865 36742749 Medical Intensive Care Unit (MICU)              
+##  2   10004733 27411876 37003946 Medical/Surgical Intensive Care Unit (MICU/SICU)
+##  3   10006821 23295760 30272829 Medical/Surgical Intensive Care Unit (MICU/SICU)
+##  4   10009628 25926192 31786068 Cardiac Vascular Intensive Care Unit (CVICU)    
+##  5   10012261 27493974 30741264 Trauma SICU (TSICU)                             
+##  6   10012552 27089790 36574633 Cardiac Vascular Intensive Care Unit (CVICU)    
+##  7   10013419 29669860 31631748 Surgical Intensive Care Unit (SICU)             
+##  8   10014610 23258342 30950011 Cardiac Vascular Intensive Care Unit (CVICU)    
+##  9   10016742 29281842 39410091 Surgical Intensive Care Unit (SICU)             
+## 10   10017308 29888008 36392624 Neuro Surgical Intensive Care Unit (Neuro SICU) 
+##    last_careunit                                    intime             
+##    &lt;chr&gt;                                            &lt;dttm&gt;             
+##  1 Medical Intensive Care Unit (MICU)               2189-06-27 08:42:00
+##  2 Medical/Surgical Intensive Care Unit (MICU/SICU) 2174-12-04 11:28:24
+##  3 Medical/Surgical Intensive Care Unit (MICU/SICU) 2182-10-24 20:38:16
+##  4 Cardiac Vascular Intensive Care Unit (CVICU)     2153-09-19 09:54:49
+##  5 Trauma SICU (TSICU)                              2170-05-11 18:50:00
+##  6 Cardiac Vascular Intensive Care Unit (CVICU)     2140-03-25 14:37:26
+##  7 Surgical Intensive Care Unit (SICU)              2167-03-31 13:15:00
+##  8 Cardiac Vascular Intensive Care Unit (CVICU)     2173-12-20 09:55:34
+##  9 Surgical Intensive Care Unit (SICU)              2178-07-03 22:45:00
+## 10 Neuro Intermediate                               2142-08-06 09:56:53
+##    outtime                los admittime           dischtime          
+##    &lt;dttm&gt;               &lt;dbl&gt; &lt;dttm&gt;              &lt;dttm&gt;             
+##  1 2189-06-27 20:38:27  0.498 2189-06-27 07:38:00 2189-07-03 03:00:00
+##  2 2174-12-12 20:03:01  8.36  2174-12-04 11:28:00 2174-12-27 14:00:00
+##  3 2182-10-26 06:02:42  1.39  2182-10-24 20:36:00 2182-10-26 18:00:00
+##  4 2153-09-21 16:39:06  2.28  2153-09-17 17:08:00 2153-09-25 13:20:00
+##  5 2170-05-14 23:59:03  3.21  2170-05-11 17:09:00 2170-05-15 18:40:00
+##  6 2140-03-28 18:25:54  3.16  2140-03-22 17:18:00 2140-03-30 14:10:00
+##  7 2167-04-01 14:56:13  1.07  2167-03-31 12:03:00 2167-04-01 13:00:00
+##  8 2173-12-24 06:12:53  3.85  2173-12-19 11:00:00 2173-12-26 14:15:00
+##  9 2178-07-08 20:34:44  4.91  2178-07-03 21:13:00 2178-07-08 20:20:00
+## 10 2142-08-16 11:41:42 10.1   2142-08-05 18:43:00 2142-08-16 11:01:00
+##    deathtime           admission_type admission_location    
+##    &lt;dttm&gt;              &lt;chr&gt;          &lt;chr&gt;                 
+##  1 NA                  EW EMER.       EMERGENCY ROOM        
+##  2 NA                  URGENT         TRANSFER FROM HOSPITAL
+##  3 NA                  EW EMER.       PROCEDURE SITE        
+##  4 NA                  URGENT         TRANSFER FROM HOSPITAL
+##  5 NA                  EW EMER.       EMERGENCY ROOM        
+##  6 NA                  URGENT         TRANSFER FROM HOSPITAL
+##  7 NA                  EW EMER.       EMERGENCY ROOM        
+##  8 NA                  ELECTIVE       PHYSICIAN REFERRAL    
+##  9 NA                  EW EMER.       EMERGENCY ROOM        
+## 10 NA                  EW EMER.       TRANSFER FROM HOSPITAL
+##    discharge_location       insurance language marital_status
+##    &lt;chr&gt;                    &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;         
+##  1 HOME HEALTH CARE         Medicare  ENGLISH  MARRIED       
+##  2 HOME HEALTH CARE         Medicaid  ENGLISH  SINGLE        
+##  3 ACUTE HOSPITAL           Other     ENGLISH  MARRIED       
+##  4 HOME HEALTH CARE         Medicaid  ?        MARRIED       
+##  5 HOME HEALTH CARE         Medicare  ENGLISH  MARRIED       
+##  6 HOME HEALTH CARE         Medicare  ENGLISH  MARRIED       
+##  7 HOME                     Medicare  ENGLISH  SINGLE        
+##  8 SKILLED NURSING FACILITY Medicare  ENGLISH  MARRIED       
+##  9 SKILLED NURSING FACILITY Medicaid  ENGLISH  SINGLE        
+## 10 HOME                     Other     ENGLISH  MARRIED       
+##    ethnicity              edregtime           edouttime          
+##    &lt;chr&gt;                  &lt;dttm&gt;              &lt;dttm&gt;             
+##  1 BLACK/AFRICAN AMERICAN 2189-06-27 06:25:00 2189-06-27 08:42:00
+##  2 UNKNOWN                NA                  NA                 
+##  3 WHITE                  NA                  NA                 
+##  4 HISPANIC/LATINO        NA                  NA                 
+##  5 BLACK/AFRICAN AMERICAN 2170-05-11 12:54:00 2170-05-11 18:50:00
+##  6 UNKNOWN                NA                  NA                 
+##  7 WHITE                  2167-03-31 10:55:00 2167-03-31 13:15:00
+##  8 BLACK/AFRICAN AMERICAN NA                  NA                 
+##  9 BLACK/AFRICAN AMERICAN 2178-07-03 17:39:00 2178-07-03 22:45:00
+## 10 WHITE                  2142-08-05 10:13:00 2142-08-06 10:21:00
+##    hospital_expire_flag gender anchor_age anchor_year anchor_year_group
+##                   &lt;int&gt; &lt;chr&gt;       &lt;int&gt;       &lt;int&gt; &lt;chr&gt;            
+##  1                    0 F              73        2186 2008 - 2010      
+##  2                    0 M              51        2174 2014 - 2016      
+##  3                    0 F              61        2182 2008 - 2010      
+##  4                    0 M              58        2153 2011 - 2013      
+##  5                    0 M              68        2168 2008 - 2010      
+##  6                    0 M              78        2140 2014 - 2016      
+##  7                    0 M              40        2167 2008 - 2010      
+##  8                    0 M              66        2166 2008 - 2010      
+##  9                    0 F              58        2178 2014 - 2016      
+## 10                    0 F              60        2142 2017 - 2019      
+##    dod        age_at_adm bicarbonate calcium chloride creatinine glucose
+##    &lt;date&gt;          &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;
+##  1 NA                 76          23     9.2      103        2.2     144
+##  2 NA                 51          24     9.5      109        3.4      86
+##  3 NA                 61          19     8        107        0.8      89
+##  4 NA                 58          23     7.5      109        0.7     124
+##  5 NA                 70          26     9.7      103        1       204
+##  6 NA                 78          23     8.4      113        1       115
+##  7 NA                 40          26     7.7      107        0.6     102
+##  8 NA                 73          19     8.2      108        1.2     115
+##  9 NA                 58          33    10        103        0.3     116
+## 10 NA                 60          21     9        106        0.5     159
+##    magnesium potassium sodium hematocrit   wbc lactate heart_rate
+##        &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;      &lt;dbl&gt;
+##  1       2         4.2    139       30.8   5.4    NA           77
+##  2       2.2       3.7    146       30.9   7.4     0.8         87
+##  3       1.7       3.6    142       26.4  20.7     1          114
+##  4       1.9       3.8    139       21.2   9.2     3.6         79
+##  5       2.3       4.5    140       36.6   6.7    NA           69
+##  6       2.2       3.4    142       25.9   5.3     1.7         70
+##  7       1.8       4      135       31.6   4.4    NA           88
+##  8       2.1       3.5    139       32.1  14.1     3.9         93
+##  9       2         3.7    143       35.5  13.2     1.1        108
+## 10       2.1       4.1    139       34.6   4.9    NA           66
+##    non_invasive_blood_pressure_systolic non_invasive_blood_pressure_mean
+##                                   &lt;dbl&gt;                            &lt;dbl&gt;
+##  1                                  150                               92
+##  2                                  167                              117
+##  3                                  109                               70
+##  4                                   85                               60
+##  5                                  125                               83
+##  6                                   93                               62
+##  7                                  114                               83
+##  8                                  114                               84
+##  9                                  103                               69
+## 10                                  102                               75
+##    respiratory_rate temperature_fahrenheit arterial_blood_pressure_systolic
+##               &lt;dbl&gt;                  &lt;dbl&gt;                            &lt;dbl&gt;
+##  1               23                   98                                 NA
+##  2               22                   99.4                               NA
+##  3               20                   98.8                               NA
+##  4               16                   98.6                               92
+##  5               15                   96.9                               NA
+##  6               18                   98.5                              147
+##  7               19                   97.6                               NA
+##  8               16                   97.7                              102
+##  9               20                   99                                 NA
+## 10               20                   98.7                              115
+##    arterial_blood_pressure_mean death_within_30days
+##                           &lt;dbl&gt; &lt;lgl&gt;              
+##  1                           NA FALSE              
+##  2                           NA FALSE              
+##  3                           NA FALSE              
+##  4                           61 FALSE              
+##  5                           NA FALSE              
+##  6                           97 FALSE              
+##  7                           NA FALSE              
+##  8                           76 FALSE              
+##  9                           NA FALSE              
+## 10                           66 FALSE              
+## # … with 49,961 more rows</code></pre>
 <p>Close database connection and clear workspace.</p>
 <pre class="r"><code>dbDisconnect(con)</code></pre>
 <pre><code>## [1] TRUE</code></pre>

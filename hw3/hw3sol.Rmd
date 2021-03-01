@@ -105,13 +105,15 @@ patients_tble <- tbl(con, Id(schema = "mimic_core", table = "patients")) %>%
 
 5. Connect to the admissions table.
 ```{r}
-admissions_tble <- tbl(con, Id(schema = "mimic_core", table = "admissions")) %>%
+admissions_tble <- tbl(con, Id(schema = "mimic_core", 
+                               table = "admissions")) %>%
   print(width = Inf)
 ```
 
 6. Connect to the `mimic_labevents_icu` table.
 ```{r}
-labevents_tble <- tbl(con, Id(schema = "public", table = "mimic_labevents_icu")) %>%
+labevents_tble <- tbl(con, Id(schema = "public", 
+                              table = "mimic_labevents_icu")) %>%
   print(width = Inf)
 ```
 
@@ -130,19 +132,28 @@ if (!dir.exists("mimiciv_shiny")) {
 }
 ```
 
-```{r eval=F}
+```{r}
 icustays_tble %>% 
+  # take first ICU stay of each unique patient
   group_by(subject_id) %>% 
   filter(rank(intime) == 1) %>% 
   ungroup() %>% 
+  # merge admissions
   left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>% 
+  # merge patients
   left_join(patients_tble, by = "subject_id") %>% 
+  # filter for adult patients
   mutate(age_at_adm = year(admittime) - anchor_year + anchor_age) %>% 
   filter(age_at_adm > 18) %>% 
+  # merge lab events
   left_join(labevents_tble, by = c("subject_id", "hadm_id")) %>% 
+  # merge chart events
   left_join(chartevents_tble, by = c("subject_id", "hadm_id", "stay_id")) %>% 
+  # display query results
   show_query() %>% 
+  # collect query result
   collect() %>% 
+  # add indicator for death within 30 days of admission
   mutate(death_within_30days = 
            case_when(
              # for flag = 1, calculate diff between death and admit time
@@ -153,8 +164,10 @@ icustays_tble %>%
                difftime(dischtime, admittime, units = "days") <= 30,
              # for flag = 0, did not die in hospital
              hospital_expire_flag  == 0 ~ FALSE)) %>% 
-  print(width = Inf) %>% 
-  saveRDS(file = "~/biostat-203b-2021-winter/hw3/mimiciv_shiny/icu_cohort.rds")
+  # not run when knitted
+  # saveRDS(file = 
+  #           "~/biostat-203b-2021-winter/hw3/mimiciv_shiny/icu_cohort.rds") %>% 
+  print(width = Inf)
 
 ```
 
