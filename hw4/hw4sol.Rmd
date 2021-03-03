@@ -22,6 +22,7 @@ Load database libraries and the tidyverse frontend:
 library(tidyverse)
 library(lubridate)
 library(miceRanger)
+library(readr)
 ```
 
 ## Q1. Missing data
@@ -34,9 +35,52 @@ Through the Shiny app developed in HW3, we observe abundant missing values in th
 
 1. Explain the jargon MCAR, MAR, and MNAR.
 
+**Solution**: MCAR refers to data being Missing Completely At Random, which suggests that the causes of missing data are unrelated to the data itself. MAR refers to data being Missing At Random, which suggests that the probability of having missing data is the same within groups defined by the observed data, and might be different between groups. MNAR refers to data being Missing Not At Random, which suggests that the probability of having missing data varies for reasons that are unknown. 
+
 2. Explain in a couple of sentences how the Multiple Imputation by Chained Equations (MICE) work.
 
+**Solution**: For a dataset with p variables, replace the missing values for each variable with placeholders, e.g. mean of the not missing observations for each variable. Set the placeholders of one of these variables back to missing, and use this variable as the dependent variable in a regression model and all the other variables as predictors. Use this model to predict and replace missing values for this variable. Repeat this process for all the variables, and the repeat the whole process for several cycles. 
+
 3. Perform a data quality check of the ICU stays data. Discard variables with substantial missingness, say >5000 `NA`s. Replace apparent data entry errors by `NA`s.
+
+```{r eval=F}
+icu <- read_rds("/Users/julietzhou/Documents/R/HW3_Shiny/icu_cohort.rds")
+
+missing_var <- as_tibble(cbind(col_names = colnames(icu), 
+                       missing = colSums(is.na(icu)) > 5000)) %>% 
+  filter(missing == TRUE) %>% 
+  print()
+
+icu_n <- icu %>% 
+  select(-missing_var$col_names) %>% 
+  print()
+```
+
+```{r}
+
+# data entry errors
+# labs
+# calcium, glucose, magnesium, potassium, wbc
+
+boxplot(icu$potassium)
+
+# vitals 
+# heart_rate > 800
+# temperature_fahrenheit
+  # Celcius mistakes; < 20 
+# non_invasive_blood_pressure_systolic > 10000
+# non_invasive_blood_pressure_mean > 100000
+# arterial_blood_pressure_systolic > 500
+# arterial_blood_pressure_mean
+
+boxplot(icu$arterial_blood_pressure_mean)
+
+icu %>% filter(arterial_blood_pressure_mean < 0) %>% 
+  select(arterial_blood_pressure_mean)
+
+
+```
+
 
 4. Impute missing values by `miceRanger` (request $m=3$ datasets). This step is very computational intensive. Make sure to save the imputation results as a file.
 
