@@ -46,11 +46,38 @@ Through the Shiny app developed in HW3, we observe abundant missing values in th
 ```{r eval=F}
 icu <- read_rds("/Users/julietzhou/Documents/R/HW3_Shiny/icu_cohort.rds")
 
-colSums(is.na(icu)) > 5000
+missing_var <- as_tibble(cbind(col_names = colnames(icu), 
+                       missing = colSums(is.na(icu)) > 5000)) %>% 
+  filter(missing == TRUE) %>% 
+  print()
 
-for (i in colnames(icu)){
-   print(class(df[[i]]))
-}
+icu_n <- icu %>% 
+  select(-missing_var$col_names) %>% 
+  print()
+```
+
+```{r}
+
+# data entry errors
+# labs
+# calcium, glucose, magnesium, potassium, wbc
+
+boxplot(icu$potassium)
+
+# vitals 
+# heart_rate > 800
+# temperature_fahrenheit
+  # Celcius mistakes; < 20 
+# non_invasive_blood_pressure_systolic > 10000
+# non_invasive_blood_pressure_mean > 100000
+# arterial_blood_pressure_systolic > 500
+# arterial_blood_pressure_mean
+
+boxplot(icu$arterial_blood_pressure_mean)
+
+icu %>% filter(arterial_blood_pressure_mean < 0) %>% 
+  select(arterial_blood_pressure_mean)
+
 
 ```
 
