@@ -49,7 +49,7 @@ ui <- fluidPage(
                              label = "Choose from the following:",
                              choices = c("bicarbonate", "calcium", "chloride", 
                                          "creatinine", "glucose", "magnesium", 
-                                         "potassium", "sodium", "hemotocrit", 
+                                         "potassium", "sodium", "hematocrit", 
                                          "wbc", "lactate")
                  ),
                  
