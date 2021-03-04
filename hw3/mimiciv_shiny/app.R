@@ -5,7 +5,6 @@ library(ggplot2)
 library(tidyverse)
 library(stringr)
 library(scales)
-#library(RColorBrewer)
 
 icu <- readRDS("./icu_cohort.rds")
 
@@ -13,7 +12,7 @@ icu <- readRDS("./icu_cohort.rds")
 ui <- fluidPage(
   
   # Application title
-  titlePanel("MIMIC-IV Visualization"),
+  titlePanel("MIMIC-IV Data Visualization"),
   
   tabsetPanel(
     
@@ -70,6 +69,7 @@ ui <- fluidPage(
                
                mainPanel(
                  textOutput("labNAs"),
+                 verbatimTextOutput("labSum"),
                  plotOutput("labBoxplot"),
                  plotOutput("labBoxBy")
                )
@@ -111,6 +111,7 @@ ui <- fluidPage(
                
                mainPanel(
                  textOutput("vitalNAs"),
+                 verbatimTextOutput("vitalSum"),
                  plotOutput("vitalBoxplot"),
                  plotOutput("vitalBoxBy")
                )
@@ -190,6 +191,17 @@ server <- function(input, output) {
     
   })
   
+  
+  # labs tab: display summary stats
+  output$labSum <- renderPrint({
+    
+    icu %>%
+      select(input$lab) %>%
+      summary()
+    
+  })
+  
+  
   #labs tab: display overall boxplot
   output$labBoxplot <- renderPlot({
     
@@ -260,6 +272,16 @@ server <- function(input, output) {
           sep = " ")
     
   })
+  
+  # vitals tab: display summary stats
+  output$vitalSum <- renderPrint({
+    
+    icu %>%
+      select(input$vital) %>%
+      summary()
+    
+  })
+  
   
   #vitals tab: display overall boxplot
   output$vitalBoxplot <- renderPlot({
