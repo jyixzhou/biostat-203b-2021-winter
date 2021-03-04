@@ -62,7 +62,7 @@ icu_n <- icu %>%
 # labs
 # calcium, glucose, magnesium, potassium, wbc
 
-boxplot(icu$potassium)
+boxplot(icu_n$wbc)
 
 # vitals 
 # heart_rate > 800
@@ -70,23 +70,68 @@ boxplot(icu$potassium)
   # Celcius mistakes; < 20 
 # non_invasive_blood_pressure_systolic > 10000
 # non_invasive_blood_pressure_mean > 100000
-# arterial_blood_pressure_systolic > 500
-# arterial_blood_pressure_mean
-
-boxplot(icu$arterial_blood_pressure_mean)
-
-icu %>% filter(arterial_blood_pressure_mean < 0) %>% 
-  select(arterial_blood_pressure_mean)
 
 
+icu_n <- icu_n %>% 
+  mutate(temperature_fahrenheit = ifelse(temperature_fahrenheit < 70, 
+                                         NA, temperature_fahrenheit)) %>% 
+  mutate(heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
+         non_invasive_blood_pressure_systolic = 
+           ifelse(non_invasive_blood_pressure_systolic > 10000, NA, 
+                  non_invasive_blood_pressure_systolic),
+         non_invasive_blood_pressure_mean = 
+           ifelse(non_invasive_blood_pressure_mean > 800, NA,
+                  non_invasive_blood_pressure_mean))
+  
+boxplot(icu_n$temperature_fahrenheit)
+
+icu_sample <- icu_n %>% sample_n(1000) %>% print()
 ```
 
 
 4. Impute missing values by `miceRanger` (request $m=3$ datasets). This step is very computational intensive. Make sure to save the imputation results as a file.
 
-5. Make imputation diagnostic plots and explain what they mean.
+```{r}
+# use icu_sample to try first
+system.time(
+  miceObj <- miceRanger(
+    icu_sample, 
+    m = 3, 
+    returnModels = TRUE, 
+    verbose = FALSE)
+)
+```
 
+5. Make imputation diagnostic plots and explain what they mean.
+```{r}
+# red: original; black: imputed values
+plotDistributions(miceObj, vars = 'allNumeric')
+# does not appear to converge over iterations
+plotCorrelations(miceObj, vars = 'allNumeric')
+# for some, there's some convergence
+plotVarConvergence(miceObj,vars = 'allNumeric')
+# not converging
+plotModelError(miceObj,vars = 'allNumeric')
+
+plotVarImportance(miceObj)
+```
 6. Obtain a complete data set by averaging the 3 imputed data sets.
+
+```{r}
+dataList <- completeData(miceObj)
+
+data1 <- mutate(dataList$Dataset_1, m = 1)
+data2 <- mutate(dataList$Dataset_2, m = 2)
+data3 <- mutate(dataList$Dataset_3, m = 3)
+
+finaldata <- rbind(data1, data2, data3)
+glimpse(data1)
+
+icu_sample %>% filter(is.na(discharge_location))
+
+finaldata %>% filter(subject_id == 18359184)
+
+```
 
 ## Q2. Predicting 30-day mortality
 
