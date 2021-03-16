@@ -23,6 +23,9 @@ library(tidyverse)
 library(lubridate)
 library(miceRanger)
 library(readr)
+library(caret)
+library(randomForest)
+library(keras)
 ```
 
 ## Q1. Missing data
@@ -46,60 +49,70 @@ Through the Shiny app developed in HW3, we observe abundant missing values in th
 ```{r eval=F}
 icu <- read_rds("/Users/julietzhou/Documents/R/HW3_Shiny/icu_cohort.rds")
 
+# print the variables with > 5000 missing values
 missing_var <- as_tibble(cbind(col_names = colnames(icu), 
                        missing = colSums(is.na(icu)) > 5000)) %>% 
   filter(missing == TRUE) %>% 
   print()
 
-icu_n <- icu %>% 
-  select(-missing_var$col_names) %>% 
-  print()
+# remove these variables
+icu <- icu %>% 
+  select(-missing_var$col_names)
 ```
 
 ```{r}
+# For vitals, the following measurements are replaced with NA: 
 
-# data entry errors
-# labs
-# calcium, glucose, magnesium, potassium, wbc
-
-boxplot(icu_n$wbc)
-
-# vitals 
+# temperature_fahrenheit < 70
 # heart_rate > 800
-# temperature_fahrenheit
-  # Celcius mistakes; < 20 
 # non_invasive_blood_pressure_systolic > 10000
-# non_invasive_blood_pressure_mean > 100000
+# non_invasive_blood_pressure_mean > 800
 
-
-icu_n <- icu_n %>% 
-  mutate(temperature_fahrenheit = ifelse(temperature_fahrenheit < 70, 
-                                         NA, temperature_fahrenheit)) %>% 
-  mutate(heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
+icu <- icu %>% 
+  mutate(temperature_fahrenheit = 
+           ifelse(temperature_fahrenheit < 70, 
+                  NA, temperature_fahrenheit),
+         heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
          non_invasive_blood_pressure_systolic = 
            ifelse(non_invasive_blood_pressure_systolic > 10000, NA, 
                   non_invasive_blood_pressure_systolic),
          non_invasive_blood_pressure_mean = 
            ifelse(non_invasive_blood_pressure_mean > 800, NA,
                   non_invasive_blood_pressure_mean))
-  
-boxplot(icu_n$temperature_fahrenheit)
-
-icu_sample <- icu_n %>% sample_n(1000) %>% print()
 ```
 
 
 4. Impute missing values by `miceRanger` (request $m=3$ datasets). This step is very computational intensive. Make sure to save the imputation results as a file.
 
 ```{r}
-# use icu_sample to try first
+# demonstrate with a random sample of 1000 from the data set
+set.seed(1245)
+icu_sample <- icu %>% sample_n(10000) %>% 
+  # only keep variables that are going to be used in Q2
+  select(death_within_30days, # outcome variable
+         gender, age_at_adm, marital_status, ethnicity, # demographics
+         # first lab measurements
+         bicarbonate, calcium, chloride, creatinine, glucose, magnesium, 
+         potassium, sodium, hematocrit, wbc,
+         # first vital measurements
+         heart_rate, non_invasive_blood_pressure_systolic, 
+         non_invasive_blood_pressure_mean, respiratory_rate, 
+         temperature_fahrenheit)
+
 system.time(
   miceObj <- miceRanger(
     icu_sample, 
     m = 3, 
+    max.depth = 10,
     returnModels = TRUE, 
     verbose = FALSE)
 )
+
+# runtime: 214.485 
+
+dataList <- completeData(miceObj)
+
+saveRDS(dataList, file = "/Users/julietzhou/Documents/R/HW4/miceData_n10000.rds")
 ```
 
 5. Make imputation diagnostic plots and explain what they mean.
@@ -118,19 +131,21 @@ plotVarImportance(miceObj)
 6. Obtain a complete data set by averaging the 3 imputed data sets.
 
 ```{r}
-dataList <- completeData(miceObj)
+xnam <- names(icu_sample)[2:20]
 
-data1 <- mutate(dataList$Dataset_1, m = 1)
-data2 <- mutate(dataList$Dataset_2, m = 2)
-data3 <- mutate(dataList$Dataset_3, m = 3)
+fmla <- as.formula(paste("death_within_30days ~ ", paste(xnam, collapse= "+")))
 
-finaldata <- rbind(data1, data2, data3)
-glimpse(data1)
+dm1 <- model.matrix(fmla, data = dataList$Dataset_1)
+dm2 <- model.matrix(fmla, data = dataList$Dataset_2)
+dm3 <- model.matrix(fmla, data = dataList$Dataset_3)
 
-icu_sample %>% filter(is.na(discharge_location))
+dm_avg <- (dm1 + dm2 + dm3)/3
 
-finaldata %>% filter(subject_id == 18359184)
+finaldata <- cbind(
+  death_within_30days = as.numeric(dataList$Dataset_1$death_within_30days), 
+  as.data.frame(dm_avg))
 
+remove(dm1, dm2, dm3, dm_avg)
 ```
 
 ## Q2. Predicting 30-day mortality
@@ -139,6 +154,87 @@ Develop at least two analytic approaches for predicting the 30-day mortality of 
 
 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
 
+```{r}
+set.seed(1245)
+train_index <- createDataPartition(
+  finaldata$death_within_30days,
+  p = 0.8,
+  list = FALSE)
+
+# the following dataasets can be used directly in logistic model
+icu_train <- finaldata[train_index, ]
+icu_test <- finaldata[-train_index, ]
+
+# the following steps format data for neural network
+icu_train_x <- subset(icu_train, select = -death_within_30days) 
+icu_train_x <- as.matrix(icu_train_x)
+
+icu_train_y <- icu_train$death_within_30days
+
+icu_test_x <- subset(icu_test, select = -death_within_30days) 
+icu_test_x <- as.matrix(icu_test_x)
+
+icu_test_y <- icu_test$death_within_30days
+```
+
 2. Train the models using the training set.
 
+```{r}
+# Model 1: logistic model
+
+# fit the model
+logit_model <- train(as.character(death_within_30days) ~. + 0, 
+                     data = icu_train, 
+                     method = "glm", 
+                     family = binomial(link = "logit"))
+
+# test the model
+# get predictions for the test dataset
+pred <- predict(logit_model, newdata = icu_test)
+# calculate accuracy of the model
+accuracy <- table(pred, icu_test[,"death_within_30days"])
+sum(diag(accuracy))/sum(accuracy)
+```
+
+```{r}
+# Model 2: logistic model with lasso penalty
+install.packages("glmnet")
+library(glmnet)
+
+```
+
+```{r}
+# Model 4: neural networks
+
+nn_model <- keras_model_sequential() 
+nn_model %>% 
+  layer_dense(units = 8, activation = 'relu', 
+              input_shape = ncol(icu_train_x)) %>% 
+  layer_dropout(rate = 0.4) %>% 
+  layer_dense(units = 8, activation = 'relu') %>%
+  layer_dropout(rate = 0.3) %>%
+  layer_dense(units = 1, activation = 'sigmoid') 
+
+nn_model %>% compile(
+  loss = loss_binary_crossentropy, 
+  optimizer = "adam", 
+  metrics = "binary_accuracy"
+)
+
+system.time({
+history_icu <- nn_model %>% fit(
+  x = icu_train_x, y = icu_train_y, 
+  epochs = 30, batch_size = 128, 
+  validation_split = 0.2
+)
+})
+
+plot(history_icu)
+
+# test the model
+nn_model %>% evaluate(icu_test_x, icu_test_y)
+```
+
 3. Compare model prediction performance on the test set.
+
+
