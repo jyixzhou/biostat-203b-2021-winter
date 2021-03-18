@@ -501,6 +501,7 @@ library(caret)</code></pre>
 </ol>
 <p><strong>Solution</strong>:</p>
 <pre class="r"><code>icu &lt;- read_rds(&quot;/Users/julietzhou/Documents/R/HW3_Shiny/icu_cohort.rds&quot;)
+# if knitting on server:
 # icu &lt;- read_rds(&quot;../hw3/mimiciv_shiny/icu_cohort.rds&quot;)
 
 # print the variables with &gt; 5000 missing values
@@ -521,31 +522,29 @@ missing_var &lt;- as_tibble(cbind(col_names = colnames(icu),
 <pre class="r"><code># remove these variables
 icu &lt;- icu %&gt;% 
   select(-missing_var$col_names)</code></pre>
-<pre class="r"><code># For lab measurements, not enough information is available to determine 
-# abnormal values. 
-
-# For vitals, the following measurements are replaced with NA: 
-
-# temperature_fahrenheit &lt; 70
-# heart_rate &gt; 800
-# non_invasive_blood_pressure_systolic &gt; 10000
-# non_invasive_blood_pressure_mean &gt; 800
+<p>For lab measurements, not enough information is available to determine the range of abnormal values, therefore these variables are kept as they are. For vital measurements, physically impossible values are replaced with <code>NA</code>s.</p>
+<pre class="r"><code># For vitals, the following measurements are replaced with NA: 
 
 icu &lt;- icu %&gt;% 
-  mutate(temperature_fahrenheit = 
-           ifelse(temperature_fahrenheit &lt; 70, 
-                  NA, temperature_fahrenheit),
-         heart_rate = ifelse(heart_rate &gt; 800, NA, heart_rate),
-         non_invasive_blood_pressure_systolic = 
-           ifelse(non_invasive_blood_pressure_systolic &gt; 10000, NA, 
-                  non_invasive_blood_pressure_systolic),
-         non_invasive_blood_pressure_mean = 
-           ifelse(non_invasive_blood_pressure_mean &gt; 800, NA,
-                  non_invasive_blood_pressure_mean))</code></pre>
+  mutate(
+    # temperature_fahrenheit &lt; 70
+    temperature_fahrenheit = 
+      ifelse(temperature_fahrenheit &lt; 70, 
+             NA, temperature_fahrenheit),
+    # heart_rate &gt; 800
+    heart_rate = ifelse(heart_rate &gt; 800, NA, heart_rate),
+    # non_invasive_blood_pressure_systolic &gt; 10000
+    non_invasive_blood_pressure_systolic = 
+      ifelse(non_invasive_blood_pressure_systolic &gt; 10000, NA, 
+             non_invasive_blood_pressure_systolic),
+    # non_invasive_blood_pressure_mean &gt; 800
+    non_invasive_blood_pressure_mean = 
+      ifelse(non_invasive_blood_pressure_mean &gt; 800, NA,
+             non_invasive_blood_pressure_mean))</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Impute missing values by <code>miceRanger</code> (request <span class="math inline">\(m=3\)</span> datasets). This step is very computational intensive. Make sure to save the imputation results as a file.</li>
 </ol>
-<p><strong>Solution</strong>: The code for imputation is not run in order to shorten the knitting time. The final mice object is saved locally, and called in later steps.</p>
+<p><strong>Solution</strong>: The code for imputation is not run in order to shorten the knitting time. The final mice object and the imputed datasets are saved locally, and called in later steps.</p>
 <pre class="r"><code>icu &lt;- icu %&gt;% 
   # only keep variables that are going to be used in Q2
   select(death_within_30days, # outcome variable
@@ -565,8 +564,6 @@ icu &lt;- icu %&gt;%
     returnModels = TRUE, 
     verbose = FALSE)
 )
-
-# runtime: 1383.446
 
 # save the imputed objects
 dataList &lt;- completeData(miceObj)
@@ -598,8 +595,9 @@ plotDistributions(miceObj)</code></pre>
 
 # set up the model formula
 xnam &lt;- names(icu)[2:20]
-fmla &lt;- as.formula(paste(&quot;death_within_30days ~ &quot;, paste(xnam, collapse= &quot;+&quot;)))
+fmla &lt;- as.formula(paste(&quot;death_within_30days ~ &quot;, paste(xnam, collapse = &quot;+&quot;)))
 
+# obtain the model matrix from each data set, and average the three matrices
 dm1 &lt;- model.matrix(fmla, data = dataList$Dataset_1)
 dm2 &lt;- model.matrix(fmla, data = dataList$Dataset_2)
 dm3 &lt;- model.matrix(fmla, data = dataList$Dataset_3)

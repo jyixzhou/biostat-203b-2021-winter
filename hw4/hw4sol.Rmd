@@ -51,6 +51,7 @@ Through the Shiny app developed in HW3, we observe abundant missing values in th
 **Solution**:
 ```{r}
 icu <- read_rds("/Users/julietzhou/Documents/R/HW3_Shiny/icu_cohort.rds")
+# if knitting on server:
 # icu <- read_rds("../hw3/mimiciv_shiny/icu_cohort.rds")
 
 # print the variables with > 5000 missing values
@@ -64,34 +65,33 @@ icu <- icu %>%
   select(-missing_var$col_names)
 ```
 
-```{r}
-# For lab measurements, not enough information is available to determine 
-# abnormal values. 
+For lab measurements, not enough information is available to determine the range of abnormal values, therefore these variables are kept as they are. For vital measurements,  physically impossible values are replaced with `NA`s. 
 
+```{r}
 # For vitals, the following measurements are replaced with NA: 
 
-# temperature_fahrenheit < 70
-# heart_rate > 800
-# non_invasive_blood_pressure_systolic > 10000
-# non_invasive_blood_pressure_mean > 800
-
 icu <- icu %>% 
-  mutate(temperature_fahrenheit = 
-           ifelse(temperature_fahrenheit < 70, 
-                  NA, temperature_fahrenheit),
-         heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
-         non_invasive_blood_pressure_systolic = 
-           ifelse(non_invasive_blood_pressure_systolic > 10000, NA, 
-                  non_invasive_blood_pressure_systolic),
-         non_invasive_blood_pressure_mean = 
-           ifelse(non_invasive_blood_pressure_mean > 800, NA,
-                  non_invasive_blood_pressure_mean))
+  mutate(
+    # temperature_fahrenheit < 70
+    temperature_fahrenheit = 
+      ifelse(temperature_fahrenheit < 70, 
+             NA, temperature_fahrenheit),
+    # heart_rate > 800
+    heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
+    # non_invasive_blood_pressure_systolic > 10000
+    non_invasive_blood_pressure_systolic = 
+      ifelse(non_invasive_blood_pressure_systolic > 10000, NA, 
+             non_invasive_blood_pressure_systolic),
+    # non_invasive_blood_pressure_mean > 800
+    non_invasive_blood_pressure_mean = 
+      ifelse(non_invasive_blood_pressure_mean > 800, NA,
+             non_invasive_blood_pressure_mean))
 ```
 
 
 4. Impute missing values by `miceRanger` (request $m=3$ datasets). This step is very computational intensive. Make sure to save the imputation results as a file.
 
-**Solution**: The code for imputation is not run in order to shorten the knitting time. The final mice object is saved locally, and called in later steps. 
+**Solution**: The code for imputation is not run in order to shorten the knitting time. The final mice object and the imputed datasets are saved locally, and called in later steps. 
 
 ```{r}
 icu <- icu %>% 
@@ -116,8 +116,6 @@ system.time(
     returnModels = TRUE, 
     verbose = FALSE)
 )
-
-# runtime: 1383.446
 
 # save the imputed objects
 dataList <- completeData(miceObj)
@@ -163,8 +161,9 @@ dataList <- read_rds("/Users/julietzhou/Documents/R/HW4/miceData_full.rds")
 
 # set up the model formula
 xnam <- names(icu)[2:20]
-fmla <- as.formula(paste("death_within_30days ~ ", paste(xnam, collapse= "+")))
+fmla <- as.formula(paste("death_within_30days ~ ", paste(xnam, collapse = "+")))
 
+# obtain the model matrix from each data set, and average the three matrices
 dm1 <- model.matrix(fmla, data = dataList$Dataset_1)
 dm2 <- model.matrix(fmla, data = dataList$Dataset_2)
 dm3 <- model.matrix(fmla, data = dataList$Dataset_3)
@@ -186,6 +185,7 @@ Develop at least two analytic approaches for predicting the 30-day mortality of 
 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
 
 **Solution**:
+
 ```{r}
 set.seed(1245)
 # partition data
@@ -213,6 +213,7 @@ icu_test_y <- icu_test$death_within_30days
 2. Train the models using the training set.
 
 **Solution**:
+
 ```{r}
 # Model 1: logistic model
 
