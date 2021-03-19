@@ -1,7 +1,7 @@
 ---
 title: "Biostat 203B Homework 4"
 author: Juliet Yixuan Zhou
-subtitle: Due Mar 12 @ 11:59PM
+subtitle: Due Mar 19 @ 11:59PM
 output:
   # ioslides_presentation: default
   html_document:
@@ -19,10 +19,15 @@ sessionInfo()
 ```
 Load database libraries and the tidyverse frontend:
 ```{r}
+#install.packages("caret")
+
 library(tidyverse)
 library(lubridate)
 library(miceRanger)
 library(readr)
+library(caret)
+library(randomForest)
+library(keras)
 ```
 
 ## Q1. Missing data
@@ -39,98 +44,138 @@ Through the Shiny app developed in HW3, we observe abundant missing values in th
 
 2. Explain in a couple of sentences how the Multiple Imputation by Chained Equations (MICE) work.
 
-**Solution**: For a dataset with p variables, replace the missing values for each variable with placeholders, e.g. mean of the not missing observations for each variable. Set the placeholders of one of these variables back to missing, and use this variable as the dependent variable in a regression model and all the other variables as predictors. Use this model to predict and replace missing values for this variable. Repeat this process for all the variables, and the repeat the whole process for several cycles. 
+**Solution**: For a dataset with p variables, replace the missing values for each variable with placeholders, e.g. mean of the not missing observations for each variable. Set the placeholders of one of these variables back to missing, and use this variable as the dependent variable in a regression model and all the other variables as predictors. Use this model to predict and replace missing values for this variable. Repeat this process for all the variables, and then repeat the whole process for several cycles. 
 
 3. Perform a data quality check of the ICU stays data. Discard variables with substantial missingness, say >5000 `NA`s. Replace apparent data entry errors by `NA`s.
 
-```{r eval=F}
+**Solution**:
+```{r}
 icu <- read_rds("/Users/julietzhou/Documents/R/HW3_Shiny/icu_cohort.rds")
+# if knitting on server:
+# icu <- read_rds("../hw3/mimiciv_shiny/icu_cohort.rds")
 
+# print the variables with > 5000 missing values
 missing_var <- as_tibble(cbind(col_names = colnames(icu), 
                        missing = colSums(is.na(icu)) > 5000)) %>% 
   filter(missing == TRUE) %>% 
   print()
 
-icu_n <- icu %>% 
-  select(-missing_var$col_names) %>% 
-  print()
+# remove these variables
+icu <- icu %>% 
+  select(-missing_var$col_names)
 ```
 
+For lab measurements, not enough information is available to determine the range of abnormal values, therefore these variables are kept as they are. For vital measurements,  physically impossible values are replaced with `NA`s. 
+
 ```{r}
+# For vitals, the following measurements are replaced with NA: 
 
-# data entry errors
-# labs
-# calcium, glucose, magnesium, potassium, wbc
-
-boxplot(icu_n$wbc)
-
-# vitals 
-# heart_rate > 800
-# temperature_fahrenheit
-  # Celcius mistakes; < 20 
-# non_invasive_blood_pressure_systolic > 10000
-# non_invasive_blood_pressure_mean > 100000
-
-
-icu_n <- icu_n %>% 
-  mutate(temperature_fahrenheit = ifelse(temperature_fahrenheit < 70, 
-                                         NA, temperature_fahrenheit)) %>% 
-  mutate(heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
-         non_invasive_blood_pressure_systolic = 
-           ifelse(non_invasive_blood_pressure_systolic > 10000, NA, 
-                  non_invasive_blood_pressure_systolic),
-         non_invasive_blood_pressure_mean = 
-           ifelse(non_invasive_blood_pressure_mean > 800, NA,
-                  non_invasive_blood_pressure_mean))
-  
-boxplot(icu_n$temperature_fahrenheit)
-
-icu_sample <- icu_n %>% sample_n(1000) %>% print()
+icu <- icu %>% 
+  mutate(
+    # temperature_fahrenheit < 70
+    temperature_fahrenheit = 
+      ifelse(temperature_fahrenheit < 70, 
+             NA, temperature_fahrenheit),
+    # heart_rate > 800
+    heart_rate = ifelse(heart_rate > 800, NA, heart_rate),
+    # non_invasive_blood_pressure_systolic > 10000
+    non_invasive_blood_pressure_systolic = 
+      ifelse(non_invasive_blood_pressure_systolic > 10000, NA, 
+             non_invasive_blood_pressure_systolic),
+    # non_invasive_blood_pressure_mean > 800
+    non_invasive_blood_pressure_mean = 
+      ifelse(non_invasive_blood_pressure_mean > 800, NA,
+             non_invasive_blood_pressure_mean))
 ```
 
 
 4. Impute missing values by `miceRanger` (request $m=3$ datasets). This step is very computational intensive. Make sure to save the imputation results as a file.
 
+**Solution**: The code for imputation is not run in order to shorten the knitting time. The final mice object and the imputed datasets are saved locally, and called in later steps. 
+
 ```{r}
-# use icu_sample to try first
+icu <- icu %>% 
+  # only keep variables that are going to be used in Q2
+  select(death_within_30days, # outcome variable
+         gender, age_at_adm, marital_status, ethnicity, # demographics
+         # first lab measurements
+         bicarbonate, calcium, chloride, creatinine, glucose, magnesium,
+         potassium, sodium, hematocrit, wbc,
+         # first vital measurements
+         heart_rate, non_invasive_blood_pressure_systolic,
+         non_invasive_blood_pressure_mean, respiratory_rate,
+         temperature_fahrenheit)
+```
+
+```{r eval=FALSE}
 system.time(
   miceObj <- miceRanger(
-    icu_sample, 
+    icu, 
     m = 3, 
+    max.depth = 10,
     returnModels = TRUE, 
     verbose = FALSE)
 )
+
+# save the imputed objects
+dataList <- completeData(miceObj)
+saveRDS(dataList, file = "/Users/julietzhou/Documents/R/HW4/miceData_full.rds")
+saveRDS(miceObj, file = "/Users/julietzhou/Documents/R/HW4/miceObj.rds")
 ```
 
 5. Make imputation diagnostic plots and explain what they mean.
-```{r}
-# red: original; black: imputed values
-plotDistributions(miceObj, vars = 'allNumeric')
-# does not appear to converge over iterations
-plotCorrelations(miceObj, vars = 'allNumeric')
-# for some, there's some convergence
-plotVarConvergence(miceObj,vars = 'allNumeric')
-# not converging
-plotModelError(miceObj,vars = 'allNumeric')
 
-plotVarImportance(miceObj)
+**Solution**: The first plot compares the imputed distributions (black) with the original distribution (red) for each variable. 
+
+```{r}
+miceObj <- read_rds("/Users/julietzhou/Documents/R/HW4/miceObj.rds")
+
+plotDistributions(miceObj)
+```
+
+The second plot examines the convergence of correlation between imputed values in every combination of datasets over several iterations. For some of the variables, there appears to be convergence going on, while for others, convergence is not achieved over 5 iterations. This may be due to specifying `max.depth = 10` because of limited computational power.  
+
+```{r}
+plotCorrelations(miceObj, vars = 'allNumeric')
+```
+
+The third plot examines the convergence of values (mean and SD) for each variable over iterations. For some variables, such as bicarbonate, chloride, and non invasive mean blood pressure, appear to be converging, while some variables are not able to converge. 
+
+```{r}
+plotVarConvergence(miceObj,vars = 'allNumeric')
+```
+
+The last plot examines the OOB model error for the variables over all iterations. We can see that most of the variables have trouble converging, suggesting that the variables might be imputed with a less than adequate degree of accuracy.  
+
+```{r}
+plotModelError(miceObj)
+
+remove(miceObj)
 ```
 6. Obtain a complete data set by averaging the 3 imputed data sets.
 
+**Solution**:
+
 ```{r}
-dataList <- completeData(miceObj)
+dataList <- read_rds("/Users/julietzhou/Documents/R/HW4/miceData_full.rds")
 
-data1 <- mutate(dataList$Dataset_1, m = 1)
-data2 <- mutate(dataList$Dataset_2, m = 2)
-data3 <- mutate(dataList$Dataset_3, m = 3)
+# set up the model formula
+xnam <- names(icu)[2:20]
+fmla <- as.formula(paste("death_within_30days ~ ", paste(xnam, collapse = "+")))
 
-finaldata <- rbind(data1, data2, data3)
-glimpse(data1)
+# obtain the model matrix from each data set, and average the three matrices
+dm1 <- model.matrix(fmla, data = dataList$Dataset_1)
+dm2 <- model.matrix(fmla, data = dataList$Dataset_2)
+dm3 <- model.matrix(fmla, data = dataList$Dataset_3)
 
-icu_sample %>% filter(is.na(discharge_location))
+dm_avg <- (dm1 + dm2 + dm3)/3
 
-finaldata %>% filter(subject_id == 18359184)
+# bind the averaged model matrix with outcome variable 
+finaldata <- cbind(
+  death_within_30days = as.numeric(dataList$Dataset_1$death_within_30days), 
+  as.data.frame(dm_avg))
 
+remove(dm1, dm2, dm3, dm_avg)
 ```
 
 ## Q2. Predicting 30-day mortality
@@ -139,6 +184,123 @@ Develop at least two analytic approaches for predicting the 30-day mortality of 
 
 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
 
+**Solution**:
+
+```{r}
+set.seed(1245)
+# partition data
+train_index <- createDataPartition(
+  finaldata$death_within_30days,
+  p = 0.8,
+  list = FALSE)
+
+# the following data sets (train/test) can be used directly in logistic models
+icu_train <- finaldata[train_index, ]
+icu_test <- finaldata[-train_index, ]
+
+# the following steps format data for neural networks
+icu_train_x <- subset(icu_train, select = -death_within_30days) 
+icu_train_x <- as.matrix(icu_train_x)
+
+icu_train_y <- icu_train$death_within_30days
+
+icu_test_x <- subset(icu_test, select = -death_within_30days) 
+icu_test_x <- as.matrix(icu_test_x)
+
+icu_test_y <- icu_test$death_within_30days
+```
+
 2. Train the models using the training set.
 
+**Solution**:
+
+```{r}
+# Model 1: logistic model
+
+# fit the model
+set.seed(1245)
+logit_model <- train(as.character(death_within_30days) ~. + 0, 
+                     data = icu_train, 
+                     method = "glm", 
+                     family = binomial(link = "logit"))
+```
+
+```{r}
+# Model 2: logistic model with lasso penalty
+# install.packages("glmnet")
+library(glmnet)
+set.seed(1245)
+
+# find the best lambda using cross-validation
+cv.lasso <- cv.glmnet(icu_train_x, icu_train_y, alpha = 1, family = "binomial")
+
+# fit the model on the training data
+lasso_model <- glmnet(icu_train_x, icu_train_y, 
+                      family = "binomial", alpha = 1,
+                      lambda = cv.lasso$lambda.min)
+```
+
+```{r}
+# Model 4: neural networks
+
+set.seed(1245)
+
+# specify model
+nn_model <- keras_model_sequential() 
+nn_model %>% 
+  layer_dense(units = 8, activation = 'relu', 
+              input_shape = ncol(icu_train_x)) %>% 
+  layer_dropout(rate = 0.4) %>% 
+  layer_dense(units = 8, activation = 'relu') %>%
+  layer_dropout(rate = 0.3) %>%
+  layer_dense(units = 1, activation = 'sigmoid') 
+
+nn_model %>% compile(
+  loss = loss_binary_crossentropy, 
+  optimizer = "adam", 
+  metrics = "binary_accuracy")
+
+# fit the model on the training data
+system.time({
+history_icu <- nn_model %>% fit(
+  x = icu_train_x, y = icu_train_y, 
+  epochs = 30, batch_size = 128, 
+  validation_split = 0.2
+)
+})
+
+plot(history_icu)
+```
+
 3. Compare model prediction performance on the test set.
+
+**Solution**: The first logistic model returns an accuracy of 0.9040424. With lasso penalty, the accuracy is 0.9034421 The model using neural network returns an accuracy of 0.9013408. Overall, the three models all return similar results. 
+
+```{r}
+# Model 1: logistic model
+
+# make predictions on the test data
+logit_pred <- predict(logit_model, newdata = icu_test)
+
+# calculate model accuracy
+logit_accuracy <- table(logit_pred, icu_test[,"death_within_30days"])
+sum(diag(logit_accuracy))/sum(logit_accuracy)
+```
+
+```{r}
+# Model 2: logistic model with lasso penalty
+
+# make predictions on the test data
+lasso_prob <- lasso_model %>% predict(newx = icu_test_x)
+lasso_pred <- ifelse(lasso_prob > 0.5, 1, 0)
+
+# calculate model accuracy
+mean(lasso_pred == icu_test_y)
+```
+
+```{r}
+# Model 4: neural networks
+
+# calculate model accuracy
+nn_model %>% evaluate(icu_test_x, icu_test_y)
+```
